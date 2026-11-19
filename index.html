@@ -3739,6 +3739,17 @@ async function verify2faCode(e) {
       showToast("Urgent alert banner cleared.", "info");
     }
 
+    function createIsolatedAuthClient() {
+      const cfg = state.supabaseConfig || SUPABASE_DEFAULT;
+      return window.supabase.createClient(cfg.url, cfg.anonKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      });
+    }
+    
     async function addStudentToDirectory(e) {
       e.preventDefault();
       if (!navigator.onLine) {
@@ -3756,7 +3767,8 @@ async function verify2faCode(e) {
         return;
       }
 
-      const { error } = await supabaseClient.auth.signUp({ email, password });
+      const tempAuthClient = createIsolatedAuthClient();
+      const { error } = await tempAuthClient.auth.signUp({ email, password });
       if (error) {
         showToast("Student registration failed: " + error.message, "error");
         return;
