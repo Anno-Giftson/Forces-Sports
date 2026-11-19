@@ -4046,6 +4046,78 @@ async function verify2faCode(e) {
       renderAll();
       initSupabaseCloudSync();
     });
+
+    function exportFilteredScheduleIcs() {
+      const seasonVal = document.getElementById("filter-season").value;
+      const teamVal = document.getElementById("filter-team").value;
+      const statusVal = document.getElementById("filter-status").value;
+
+      const filtered = state.games.filter(g => {
+        const team = state.teams.find(t => t.id === g.teamId);
+        if (seasonVal !== "ALL" && team?.season !== seasonVal) return false;
+        if (teamVal !== "ALL" && g.teamId !== teamVal) return false;
+        if (statusVal !== "ALL" && g.status !== statusVal) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        showToast("No games match your current filters to export.", "error");
+        return;
+      }
+
+      const lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//CSW Forces Athletics//Schedule Export//EN",
+        "CALSCALE:GREGORIAN"
+      ];
+
+      filtered.forEach(g => {
+        const team = state.teams.find(t => t.id === g.teamId);
+        const dateClean = (g.date || "").replace(/-/g, "");
+        if (!dateClean) return;
+
+        // Parse 12-hour time like "4:00 PM" into HHMMSS (defaults to 153000 if unparseable)
+        let hhmm = "1530";
+        const match = (g.time || "").match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (match) {
+          let hr = parseInt(match[1], 10);
+          const min = match[2];
+          const mer = match[3].toUpperCase();
+          if (mer === "PM" && hr < 12) hr += 12;
+          if (mer === "AM" && hr === 12) hr = 0;
+          hhmm = String(hr).padStart(2, "0") + min;
+        }
+
+        const startStamp = `${dateClean}T${hhmm}00`;
+        const endHr = String(Math.min(23, parseInt(hhmm.slice(0, 2), 10) + 2)).padStart(2, "0");
+        const endStamp = `${dateClean}T${endHr}${hhmm.slice(2)}00`;
+        const summary = `${team?.name || "Forces"} ${g.homeAway === "Away" ? "@" : "vs"} ${g.opponent}`;
+
+        lines.push(
+          "BEGIN:VEVENT",
+          `UID:${g.id}@cswforces.org`,
+          `DTSTAMP:${dateClean}T120000Z`,
+          `DTSTART:${startStamp}`,
+          `DTEND:${endStamp}`,
+          `SUMMARY:${summary}`,
+          `LOCATION:${(g.location || "").replace(/,/g, "\\,")}`,
+          `DESCRIPTION:Status: ${g.status}${g.busTime ? ` | Bus Departure: ${g.busTime}` : ""}`,
+          "END:VEVENT"
+        );
+      });
+
+      lines.push("END:VCALENDAR");
+      const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "CSW_Forces_Schedule.ics";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${filtered.length} game(s) to calendar file!`, "success");
+    }
+    
   </script>
 </body>
 </html>
