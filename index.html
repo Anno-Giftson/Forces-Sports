@@ -2099,119 +2099,115 @@
       document.getElementById("login-modal").classList.remove("hidden");
     }
 
-    function resetStaffLoginModal() {
-      pending2faUser = null;
-      generated2faCode = null;
-      document.getElementById("login-step-1").classList.remove("hidden");
-      document.getElementById("login-step-2").classList.add("hidden");
-      document.getElementById("twofa-delivery-status").classList.add("hidden");
-      document.getElementById("gas-troubleshoot").classList.add("hidden");
-      document.getElementById("twofa-code-input").value = "";
-      
-      const cfg = state.webhookConfig || GAS_DEFAULT;
-      document.getElementById("troubleshoot-gas-url").value = cfg.url || "";
-      document.getElementById("troubleshoot-gas-secret").value = cfg.secret || "";
+    let activeMfaFactorId = null;
+
+async function handleStaffStep1(e) {
+  e.preventDefault();
+  if (!navigator.onLine) {
+    showToast("You are offline. Please reconnect to sign in.", "error");
+    return;
+  }
+  const email = document.getElementById("login-email").value.trim().toLowerCase();
+  const pass = document.getElementById("login-password").value;
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    showToast("Login failed: " + error.message, "error");
+    return;
+  }
+
+  const found = state.staffUsers.find(u => u.email.toLowerCase() === email);
+  if (!found) {
+    showToast("Auth successful, but staff profile not found.", "error");
+    return;
+  }
+
+  pending2faUser = found;
+  document.getElementById("login-step-1").classList.add("hidden");
+  document.getElementById("login-step-2").classList.remove("hidden");
+
+  // Check if this staff member already has a verified TOTP factor
+  const { data: factorsData, error: factorsErr } = await supabaseClient.auth.mfa.listFactors();
+  if (factorsErr) {
+    showToast("MFA check failed: " + factorsErr.message, "error");
+    return;
+  }
+
+  const verifiedTotp = (factorsData.totp || []).find(f => f.status === "verified");
+
+  if (verifiedTotp) {
+    // Returning user: hide QR code and ask for their 6-digit code
+    activeMfaFactorId = verifiedTotp.id;
+    document.getElementById("mfa-enroll-box").classList.add("hidden");
+    document.getElementById("twofa-target-desc").textContent =
+      `Enter the 6-digit code from your Authenticator app for ${found.email}:`;
+  } else {
+    // First-time user: enroll a new TOTP factor and display QR code
+    // Clean up any abandoned unverified factors first
+    for (const f of (factorsData.totp || []).filter(f => f.status !== "verified")) {
+      await supabaseClient.auth.mfa.unenroll({ factorId: f.id });
     }
 
-    function saveTroubleshootGas() {
-      const url = document.getElementById("troubleshoot-gas-url").value.trim();
-      const secret = document.getElementById("troubleshoot-gas-secret").value.trim();
-      if (!url) {
-        showToast("Apps Script URL is required.", "error");
-        return;
-      }
-      state.webhookConfig = { url, secret };
-      persistState();
-      document.getElementById("gas-troubleshoot").classList.add("hidden");
-      showToast("Connection saved! Retrying email...", "success");
-      send2faCode('email');
+    const { data: enrollData, error: enrollErr } = await supabaseClient.auth.mfa.enroll({
+      factorType: "totp",
+      friendlyName: "CSW Forces Staff Authenticator"
+    });
+    if (enrollErr) {
+      showToast("2FA Enrollment failed: " + enrollErr.message, "error");
+      return;
     }
 
-    async function handleStaffStep1(e) {
-      e.preventDefault();
-      if (!navigator.onLine) {
-        showToast("You are offline. Please reconnect to sign in.", "error");
-        return;
-      }
-      const email = document.getElementById("login-email").value.trim().toLowerCase();
-      const pass = document.getElementById("login-password").value;
+    activeMfaFactorId = enrollData.id;
+    document.getElementById("mfa-qr-img").src = enrollData.totp.qr_code;
+    document.getElementById("mfa-manual-secret").textContent = enrollData.totp.secret;
+    document.getElementById("mfa-enroll-box").classList.remove("hidden");
+    document.getElementById("twofa-target-desc").textContent =
+      "Scan the QR code below with your Authenticator app, then enter the 6-digit code:";
+  }
+}
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: pass
-      });
+async function verify2faCode(e) {
+  e.preventDefault();
+  const code = document.getElementById("twofa-code-input").value.trim();
+  if (!activeMfaFactorId) {
+    showToast("Missing 2FA session. Please sign in again.", "error");
+    return;
+  }
 
-      if (error) {
-        showToast("Login failed: " + error.message, "error");
-        return;
-      }
+  // Create a server-side challenge and verify the 6-digit TOTP code
+  const { data: challengeData, error: challengeErr } = await supabaseClient.auth.mfa.challenge({
+    factorId: activeMfaFactorId
+  });
+  if (challengeErr) {
+    showToast("Challenge error: " + challengeErr.message, "error");
+    return;
+  }
 
-      const found = state.staffUsers.find(u => u.email.toLowerCase() === email);
-      if (!found) {
-        showToast("Auth successful, but staff profile not found.", "error");
-        return;
-      }
+  const { error: verifyErr } = await supabaseClient.auth.mfa.verify({
+    factorId: activeMfaFactorId,
+    challengeId: challengeData.id,
+    code
+  });
+  if (verifyErr) {
+    showToast("Invalid or expired 6-digit code.", "error");
+    return;
+  }
 
-      pending2faUser = found;
-      document.getElementById("login-step-1").classList.add("hidden");
-      document.getElementById("login-step-2").classList.remove("hidden");
-      document.getElementById("twofa-target-desc").textContent =
-        `Send a 6-digit verification code to ${found.email} or ${found.phone || "your registered mobile"}:`;
-    }
+  // Session is now upgraded to AAL2 (cryptographically verified 2FA)
+  const staySignedIn = document.getElementById("staff-stay-signed-in").checked;
+  saveSession({
+    id: pending2faUser.id,
+    role: pending2faUser.role,
+    name: pending2faUser.name,
+    email: pending2faUser.email,
+    assignedTeamIds: getCoachTeamIds(pending2faUser)
+  }, staySignedIn);
 
-    async function send2faCode(channel) {
-      if (!navigator.onLine) {
-        showToast("You are offline. Cannot send verification code.", "error");
-        return;
-      }
-      if (!pending2faUser) return;
-      generated2faCode = String(Math.floor(100000 + Math.random() * 900000));
-      const statusBox = document.getElementById("twofa-delivery-status");
-      statusBox.classList.remove("hidden");
-      statusBox.textContent = channel === "sms"
-        ? `Sending 6-digit SMS code to ${pending2faUser.phone}...`
-        : `Sending 6-digit verification email to ${pending2faUser.email}...`;
-
-      await callAppsScriptBridge("send_2fa", {
-        channel,
-        toEmail: pending2faUser.email,
-        toPhone: pending2faUser.phone,
-        name: pending2faUser.name,
-        code: generated2faCode
-      });
-
-      statusBox.textContent = channel === "sms"
-        ? `Verification code sent via SMS to ${pending2faUser.phone}.`
-        : `Verification code sent to ${pending2faUser.email}. Check your inbox.`;
-      showToast("6-digit verification code dispatched!", "success");
-    }
-
-    function verify2faCode(e) {
-      e.preventDefault();
-      const entered = document.getElementById("twofa-code-input").value.trim();
-      if (!generated2faCode) {
-        showToast("Please click Send Code to Email or SMS first.", "error");
-        return;
-      }
-      if (entered !== generated2faCode) {
-        showToast("Incorrect 6-digit verification code.", "error");
-        return;
-      }
-
-      const staySignedIn = document.getElementById("staff-stay-signed-in").checked;
-      saveSession({
-        id: pending2faUser.id,
-        role: pending2faUser.role,
-        name: pending2faUser.name,
-        email: pending2faUser.email,
-        assignedTeamIds: getCoachTeamIds(pending2faUser)
-      }, staySignedIn);
-
-      closeModal("login-modal");
-      resetStaffLoginModal();
-      switchMainView("admin");
-      showToast(`Welcome back, ${currentSession.name}!`, "success");
-    }
+  closeModal("login-modal");
+  resetStaffLoginModal();
+  switchMainView("admin");
+  showToast(`2FA Verified! Welcome back, ${currentSession.name}.`, "success");
+}
 
     function openStudentLoginModal() {
       document.getElementById("student-login-modal").classList.remove("hidden");
