@@ -2214,7 +2214,7 @@ async function verify2faCode(e) {
       document.getElementById("student-login-modal").classList.remove("hidden");
     }
 
-    function handleStudentLogin(e) {
+    async function handleStudentLogin(e) {
       e.preventDefault();
       if (!navigator.onLine) {
         showToast("You are offline. Please reconnect to sign in.", "error");
@@ -2223,9 +2223,15 @@ async function verify2faCode(e) {
       const email = document.getElementById("stu-login-email").value.trim().toLowerCase();
       const pass = document.getElementById("stu-login-pass").value;
 
-      const stu = state.studentDirectory.find(s => s.email.toLowerCase() === email && s.password === pass);
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+      if (error) {
+        showToast("Login failed: " + error.message, "error");
+        return;
+      }
+
+      const stu = state.studentDirectory.find(s => s.email.toLowerCase() === email);
       if (!stu) {
-        showToast("Invalid CSW student email or password.", "error");
+        showToast("Signed in, but your student profile is not in the directory yet.", "error");
         return;
       }
 
@@ -2242,7 +2248,7 @@ async function verify2faCode(e) {
       switchMainView("student");
       showToast(`Signed in as ${stu.name}`, "success");
     }
-
+    
     function renderStudentPortal() {
       if (!currentSession || currentSession.role !== "STUDENT") return;
       const stuRecord = state.studentDirectory.find(s => s.email.toLowerCase() === currentSession.email.toLowerCase());
