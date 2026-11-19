@@ -3783,6 +3783,51 @@ async function verify2faCode(e) {
       renderPublicPortal();
     }
 
+    async function uploadDiaaPhysical() {
+      if (!currentSession || currentSession.role !== "STUDENT") return;
+      const fileInput = document.getElementById("diaa-file-input");
+      const file = fileInput?.files?.[0];
+      if (!file) {
+        showToast("Please select a PDF or image file first.", "error");
+        return;
+      }
+
+      const safeEmail = currentSession.email.replace(/[^a-z0-9]/gi, "_");
+      const filePath = `${safeEmail}/${Date.now()}_${file.name}`;
+
+      showToast("Uploading DIAA physical...", "info");
+      const { error } = await supabaseClient.storage
+        .from("diaa-physicals")
+        .upload(filePath, file, { upsert: true });
+
+      if (error) {
+        showToast("Upload failed: " + error.message, "error");
+        return;
+      }
+
+      const stu = state.studentDirectory.find(s => s.email.toLowerCase() === currentSession.email.toLowerCase());
+      if (stu) {
+        stu.diaaStatus = "Pending Review";
+        stu.diaaFilePath = filePath;
+        persistState();
+        renderStudentPortal();
+      }
+      fileInput.value = "";
+      showToast("Physical uploaded! Status updated to Pending Review.", "success");
+    }
+
+    async function viewStudentPhysical(filePath) {
+      if (!filePath) return;
+      const { data, error } = await supabaseClient.storage
+        .from("diaa-physicals")
+        .createSignedUrl(filePath, 300);
+      if (error || !data?.signedUrl) {
+        showToast("Could not generate link: " + (error?.message || "Unknown error"), "error");
+        return;
+      }
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    }
+    
     function renderStudentDirectoryTable() {
       const tbody = document.getElementById("admin-students-tbody");
       if (state.studentDirectory.length === 0) {
