@@ -568,6 +568,20 @@
         </button>
       </div>
     </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-wider text-forces-royal">Account Security</span>
+        <h2 class="font-display text-xl font-bold text-forces-blue uppercase">Reset Portal Password</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Update your student login password. The Athletic Director will be notified of the change.</p>
+      </div>
+      <form onsubmit="handleStudentSelfPasswordReset(event)" class="flex flex-wrap items-center gap-2.5">
+        <input type="password" id="stu-new-self-pass" required minlength="6" placeholder="New password (min 6 chars)" class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs" />
+        <button type="submit" class="px-4 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white text-xs font-bold transition shrink-0">
+          Update Password
+        </button>
+      </form>
+    </div>
     
     <div id="student-no-teams-box" class="hidden bg-white rounded-2xl border border-slate-200 p-8 text-center max-w-xl mx-auto shadow-sm mb-8">
       <div class="w-12 h-12 rounded-2xl bg-sky-100 text-forces-blue flex items-center justify-center mx-auto mb-3 font-bold text-xl">!</div>
@@ -619,6 +633,19 @@
       </div>
     </div>
 
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-wider text-forces-royal">My Staff Account</span>
+        <h2 class="font-display text-lg font-bold text-forces-blue uppercase">Change My Portal Password</h2>
+      </div>
+      <form onsubmit="handleStaffSelfPasswordReset(event)" class="flex flex-wrap items-center gap-2.5">
+        <input type="password" id="staff-new-self-pass" required minlength="6" placeholder="New password (min 6 chars)" class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs" />
+        <button type="submit" class="px-4 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white text-xs font-bold transition shrink-0">
+          Update My Password
+        </button>
+      </form>
+    </div>
+    
     <!-- Admin Sub-Navigation Tabs -->
     <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-4 mb-8">
       <button onclick="switchAdminTab('games')" id="admintab-games" class="px-4 py-2.5 rounded-xl text-sm font-bold bg-forces-blue text-white shadow-sm transition">Manage Schedules &amp; Scores</button>
@@ -1338,10 +1365,7 @@
           <label class="block text-xs font-bold uppercase text-forces-blue mb-2">Assigned Programs (Check all that apply)</label>
           <div id="edit-staff-sports-checkboxes" class="grid sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto"></div>
         </div>
-        <div>
-          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">New Password (Leave blank to keep current)</label>
-          <input type="password" id="edit-staff-password" placeholder="Optional new password" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm" />
-        </div>
+        
         <button type="submit" class="w-full py-3 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-sm transition">
           Save Changes
         </button>
@@ -1519,6 +1543,38 @@
     </div>
   </div>
 
+  <!-- 13. AD Re-Authentication Modal to View Passwords -->
+  <div id="ad-verify-pass-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-600">AD Security Check</span>
+          <h3 class="font-display text-2xl font-bold text-forces-blue uppercase">Verify Your Identity</h3>
+        </div>
+        <button onclick="closeModal('ad-verify-pass-modal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
+      </div>
+      <p id="verify-ad-target-desc" class="text-xs text-slate-600 mb-4"></p>
+
+      <form id="verify-ad-pass-form" onsubmit="verifyAdAndRevealPassword(event)" class="space-y-3">
+        <input type="hidden" id="target-vault-email" />
+        <input type="hidden" id="target-vault-type" />
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Re-Enter Your AD Password</label>
+          <input type="password" id="ad-reauth-password-input" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-sm transition">
+          Confirm &amp; Reveal Password
+        </button>
+      </form>
+
+      <div id="revealed-vault-pass-box" class="hidden mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center space-y-1">
+        <div class="text-[11px] font-bold uppercase text-emerald-800">Current Portal Password</div>
+        <div id="revealed-vault-pass-value" class="font-mono text-lg font-extrabold text-slate-900 select-all"></div>
+        <div class="text-[11px] text-emerald-700">Close this window when finished.</div>
+      </div>
+    </div>
+  </div>
+  
   <!-- ========================================================= -->
   <!-- APPLICATION LOGIC & SUPABASE / APPS SCRIPT SYNC           -->
   <!-- ========================================================= -->
@@ -3745,6 +3801,17 @@ async function verify2faCode(e) {
       });
     }
     
+function createIsolatedAuthClient() {
+      const cfg = state.supabaseConfig || SUPABASE_DEFAULT;
+      return window.supabase.createClient(cfg.url, cfg.anonKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      });
+    }
+
     async function addStudentToDirectory(e) {
       e.preventDefault();
       if (!navigator.onLine) {
@@ -3769,6 +3836,14 @@ async function verify2faCode(e) {
         return;
       }
 
+      await supabaseClient.from("csw_password_vault").upsert({
+        target_email: email,
+        account_type: "STUDENT",
+        display_name: name,
+        current_password: password,
+        updated_at: new Date().toISOString()
+      });
+
       state.studentDirectory.push({
         id: `stu-${Date.now()}`,
         name,
@@ -3782,7 +3857,7 @@ async function verify2faCode(e) {
       e.target.reset();
       showToast(`${name} registered in CSW Student Directory!`, "success");
     }
-
+    
     function updateStudentDiaaStatus(studentId, newStatus) {
       const stu = state.studentDirectory.find(s => s.id === studentId);
       if (!stu) return;
@@ -3999,6 +4074,14 @@ async function verify2faCode(e) {
         return;
       }
 
+    await supabaseClient.from("csw_password_vault").upsert({
+        target_email: email,
+        account_type: "STAFF",
+        display_name: name,
+        current_password: password,
+        updated_at: new Date().toISOString()
+      });
+      
       state.staffUsers.push({
         id: `staff-${Date.now()}`,
         role,
