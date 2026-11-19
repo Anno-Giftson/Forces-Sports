@@ -638,7 +638,7 @@
       <button onclick="switchAdminTab('teams')" id="admintab-teams" class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">Program Info &amp; Rosters</button>
       <button onclick="switchAdminTab('excusals')" id="admintab-excusals" class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">Release Class Excusals</button>
       <button onclick="switchAdminTab('operations')" id="admintab-operations" class="hidden px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">Bus &amp; Weather Alerts</button>
-      <button onclick="switchAdminTab('students')" id="admintab-students" class="hidden px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">Student Directory &amp; DIAA</button>
+      <button onclick="switchAdminTab('students')" id="admintab-students" class="hidden px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">Student Directory</button>
       <button onclick="switchAdminTab('news')" id="admintab-news" class="hidden px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">Department Announcements</button>
       <button onclick="switchAdminTab('staff')" id="admintab-staff" class="hidden px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">AD &amp; Coach Accounts</button>
     </div>
@@ -719,7 +719,7 @@
     <div id="admin-panel-practices" class="hidden space-y-8">
       <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <h2 class="font-display text-xl font-bold text-forces-blue uppercase mb-4">Schedule Team Practice</h2>
-        <form onsubmit="addPracticeSession(event)" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <form onsubmit="addPracticeSession(event)" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Team</label>
             <select id="prac-team-select" required class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white"></select>
@@ -939,18 +939,18 @@
       </div>
     </div>
 
-    <!-- TAB F: Student Directory & DIAA Clearance (AD Only) -->
+    <!-- TAB F: Student Directory (AD Only) -->
     <div id="admin-panel-students" class="hidden space-y-8">
       <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
-            <h2 class="font-display text-xl font-bold text-forces-blue uppercase">CSW Student-Athlete Directory &amp; DIAA Clearance</h2>
-            <p class="text-xs text-slate-500">Add student accounts and manage DIAA physical clearance status (`Cleared`, `Pending Physical`, `Not Cleared`).</p>
+            <h2 class="font-display text-xl font-bold text-forces-blue uppercase">CSW Student-Athlete Directory</h2>
+            <p class="text-xs text-slate-500">Add student accounts</p>
           </div>
           <span class="px-3 py-1 rounded-full bg-sky-50 text-forces-blue border border-sky-200 text-xs font-bold">Domain: @charterschool.org</span>
         </div>
 
-        <form onsubmit="addStudentToDirectory(event)" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <form onsubmit="addStudentToDirectory(event)" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Full Name</label>
             <input type="text" id="new-stu-name" required placeholder="e.g., Jordan Vance" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm" />
@@ -968,14 +968,7 @@
               <option value="12">12th Grade (Senior)</option>
             </select>
           </div>
-          <div>
-            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">DIAA Clearance</label>
-            <select id="new-stu-diaa" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white">
-              <option value="Cleared">Cleared</option>
-              <option value="Pending Physical">Pending Physical</option>
-              <option value="Not Cleared">Not Cleared</option>
-            </select>
-          </div>
+          
           <div>
             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Student Portal Password</label>
             <input type="text" id="new-stu-pass" required placeholder="Forces2026!" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm" />
@@ -997,7 +990,6 @@
                 <th class="py-3 px-4">Student Name</th>
                 <th class="py-3 px-4">CSW Email</th>
                 <th class="py-3 px-4">Grade</th>
-                <th class="py-3 px-4">DIAA Status</th>
                 <th class="py-3 px-4">Assigned Teams</th>
                 <th class="py-3 px-4 text-right">Actions</th>
               </tr>
@@ -2321,18 +2313,10 @@ async function verify2faCode(e) {
     
     function renderStudentPortal() {
       if (!currentSession || currentSession.role !== "STUDENT") return;
-      const stuRecord = state.studentDirectory.find(s => s.email.toLowerCase() === currentSession.email.toLowerCase());
-      const diaaStatus = stuRecord?.diaaStatus || "Pending Physical";
 
       document.getElementById("student-portal-heading").textContent = `${currentSession.name}'s Forces Portal`;
       document.getElementById("student-portal-email").textContent = `${currentSession.email} • Grade ${currentSession.grade || ""}`;
 
-      const diaaBadge = document.getElementById("student-portal-diaa-badge");
-      diaaBadge.textContent = `DIAA: ${diaaStatus}`;
-      diaaBadge.className = `px-2.5 py-0.5 rounded-full text-xs font-bold ${
-        diaaStatus === "Cleared" ? "bg-emerald-100 text-emerald-800" :
-        diaaStatus === "Not Cleared" ? "bg-rose-100 text-rose-800" : "bg-amber-100 text-amber-800"
-      }`;
 
       const myTeamIds = getStudentTeamIds(currentSession.email);
       const myTeams = state.teams.filter(t => myTeamIds.includes(t.id));
@@ -2554,19 +2538,14 @@ async function verify2faCode(e) {
       const roster = team.roster || [];
       rosterEl.innerHTML = roster.length === 0
         ? `<p class="text-xs text-slate-500 col-span-2">Official roster will be posted following tryouts.</p>`
-        : roster.map(r => {
-            const stuDir = state.studentDirectory.find(s => (s.email || "").toLowerCase() === (r.email || "").toLowerCase());
-            const cleared = stuDir?.diaaStatus === "Cleared";
-            return `
-              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <div>
-                  <div class="font-bold text-sm text-slate-900">#${escapeHtml(r.number)} ${escapeHtml(r.name)}</div>
-                  <div class="text-xs text-slate-500">Grade ${escapeHtml(r.grade)} • ${escapeHtml(r.position)}</div>
-                </div>
-                ${cleared ? `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">DIAA Cleared</span>` : ""}
+        : roster.map(r => `
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-sm text-slate-900">#${escapeHtml(r.number)} ${escapeHtml(r.name)}</div>
+                <div class="text-xs text-slate-500">Grade ${escapeHtml(r.grade)} • ${escapeHtml(r.position)}</div>
               </div>
-            `;
-          }).join("");
+            </div>
+          `).join("");
 
       const gamesEl = document.getElementById("modal-team-games");
       const teamGames = state.games.filter(g => g.teamId === teamId);
@@ -3483,29 +3462,21 @@ async function verify2faCode(e) {
       const dirSel = document.getElementById("roster-directory-select");
       dirSel.innerHTML = state.studentDirectory.length === 0
         ? `<option value="">No registered students in directory yet</option>`
-        : state.studentDirectory.map(s => `<option value="${s.id}">${escapeHtml(s.name)} (Gr ${s.grade} • ${s.diaaStatus || "Pending"})</option>`).join("");
+        : state.studentDirectory.map(s => `<option value="${s.id}">${escapeHtml(s.name)} (Grade ${s.grade})</option>`).join("");
 
       const rosterList = document.getElementById("admin-roster-list");
       const roster = team.roster || [];
       rosterList.innerHTML = roster.length === 0
         ? `<p class="text-xs text-slate-500 col-span-3">No athletes rostered yet.</p>`
-        : roster.map((r, idx) => {
-            const stuDir = state.studentDirectory.find(s => (s.email || "").toLowerCase() === (r.email || "").toLowerCase());
-            const diaa = stuDir?.diaaStatus || "Pending Physical";
-            return `
-              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-                <div>
-                  <div class="font-bold text-sm text-slate-900">#${escapeHtml(r.number)} ${escapeHtml(r.name)}</div>
-                  <div class="text-xs text-slate-500">Grade ${escapeHtml(r.grade)} • ${escapeHtml(r.position)}</div>
-                  <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    diaa === "Cleared" ? "bg-emerald-100 text-emerald-800" :
-                    diaa === "Not Cleared" ? "bg-rose-100 text-rose-800" : "bg-amber-100 text-amber-800"
-                  }">DIAA: ${escapeHtml(diaa)}</span>
-                </div>
-                <button onclick="removeRosterPlayer('${team.id}', ${idx})" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
+        : roster.map((r, idx) => `
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+              <div>
+                <div class="font-bold text-sm text-slate-900">#${escapeHtml(r.number)} ${escapeHtml(r.name)}</div>
+                <div class="text-xs text-slate-500">Grade ${escapeHtml(r.grade)} • ${escapeHtml(r.position)}</div>
               </div>
-            `;
-          }).join("");
+              <button onclick="removeRosterPlayer('${team.id}', ${idx})" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
+            </div>
+          `).join("");
     }
 
     function saveTeamDetails(e) {
@@ -3795,7 +3766,6 @@ async function verify2faCode(e) {
       const name = document.getElementById("new-stu-name").value.trim();
       const email = document.getElementById("new-stu-email").value.trim().toLowerCase();
       const grade = document.getElementById("new-stu-grade").value;
-      const diaaStatus = document.getElementById("new-stu-diaa").value;
       const password = document.getElementById("new-stu-pass").value;
 
       if (state.studentDirectory.some(s => s.email.toLowerCase() === email)) {
@@ -3822,9 +3792,12 @@ async function verify2faCode(e) {
         id: `stu-${Date.now()}`,
         name,
         email,
-        grade,
-        diaaStatus
+        grade
       });
+      persistState();
+      renderStudentDirectoryTable();
+      loadAdminTeamEditor();
+      e.target.reset();
       persistState();
       renderStudentDirectoryTable();
       loadAdminTeamEditor();
@@ -3832,15 +3805,6 @@ async function verify2faCode(e) {
       showToast(`${name} registered in CSW Student Directory!`, "success");
     }
     
-    function updateStudentDiaaStatus(studentId, newStatus) {
-      const stu = state.studentDirectory.find(s => s.id === studentId);
-      if (!stu) return;
-      stu.diaaStatus = newStatus;
-      persistState();
-      loadAdminTeamEditor();
-      renderPublicPortal();
-      showToast(`DIAA status updated to ${newStatus}.`, "success");
-    }
 
     function deleteStudentFromDirectory(studentId) {
       const stu = state.studentDirectory.find(s => s.id === studentId);
@@ -3854,15 +3818,6 @@ async function verify2faCode(e) {
       loadAdminTeamEditor();
       renderPublicPortal();
     }
-
-    async function uploadDiaaPhysical() {
-      if (!currentSession || currentSession.role !== "STUDENT") return;
-      const fileInput = document.getElementById("diaa-file-input");
-      const file = fileInput?.files?.[0];
-      if (!file) {
-        showToast("Please select a PDF or image file first.", "error");
-        return;
-      }
 
       const safeEmail = currentSession.email.replace(/[^a-z0-9]/gi, "_");
       const filePath = `${safeEmail}/${Date.now()}_${file.name}`;
@@ -3887,53 +3842,56 @@ async function verify2faCode(e) {
       fileInput.value = "";
       showToast("Physical uploaded! Status updated to Pending Review.", "success");
     }
-
-    async function viewStudentPhysical(filePath) {
-      if (!filePath) return;
-      const { data, error } = await supabaseClient.storage
-        .from("diaa-physicals")
-        .createSignedUrl(filePath, 300);
-      if (error || !data?.signedUrl) {
-        showToast("Could not generate link: " + (error?.message || "Unknown error"), "error");
-        return;
-      }
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-    }
     
     function renderStudentDirectoryTable() {
-      const tbody = document.getElementById("admin-students-tbody");
-      if (state.studentDirectory.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-6 px-4 text-xs text-slate-500 text-center">No student-athletes registered yet.</td></tr>`;
-        return;
-      }
 
-     tbody.innerHTML = state.studentDirectory.map(s => {
-        const teamNames = state.teams
-          .filter(t => (t.roster || []).some(r => (r.email || "").toLowerCase() === s.email.toLowerCase()))
-          .map(t => t.name);
-        return `
-          <tr>
-            <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(s.name)}</td>
-            <td class="py-3 px-4 text-xs text-slate-600">${escapeHtml(s.email)}</td>
-            <td class="py-3 px-4 text-xs font-bold">Grade ${escapeHtml(s.grade)}</td>
-            <td class="py-3 px-4 space-y-1">
-              <select onchange="updateStudentDiaaStatus('${s.id}', this.value)" class="px-2.5 py-1 rounded-lg border border-slate-300 text-xs font-bold bg-white">
-                <option value="Cleared" ${s.diaaStatus === "Cleared" ? "selected" : ""}>Cleared</option>
-                <option value="Pending Review" ${s.diaaStatus === "Pending Review" ? "selected" : ""}>Pending Review</option>
-                <option value="Pending Physical" ${s.diaaStatus === "Pending Physical" ? "selected" : ""}>Pending Physical</option>
-                <option value="Not Cleared" ${s.diaaStatus === "Not Cleared" ? "selected" : ""}>Not Cleared</option>
-              </select>
-              ${s.diaaFilePath ? `<div><button onclick="viewStudentPhysical('${escapeHtml(s.diaaFilePath)}')" class="text-[11px] font-bold text-forces-royal hover:underline">View Uploaded Physical ↗</button></div>` : ""}
-            </td>
-            <td class="py-3 px-4 text-xs text-slate-600">${escapeHtml(teamNames.join(", ") || "None")}</td>
-            <td class="py-3 px-4 text-right whitespace-nowrap space-x-3">
-              <button onclick="openAdVaultVerifyModal('${escapeHtml(s.email)}', '${escapeHtml(s.name)}', 'STUDENT')" class="text-xs font-bold text-forces-royal hover:underline">View Password</button>
-              <button onclick="deleteStudentFromDirectory('${s.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
+const tbody = document.getElementById("admin-students-tbody");
+
+if (state.studentDirectory.length === 0) {
+
+tbody.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-xs text-slate-500 text-center">No student-athletes registered yet.</td></tr>`;
+
+return;
+
+}
+
+
+
+tbody.innerHTML = state.studentDirectory.map(s => {
+
+const teamNames = state.teams
+
+.filter(t => (t.roster || []).some(r => (r.email || "").toLowerCase() === s.email.toLowerCase()))
+
+.map(t => t.name);
+
+return `
+
+<tr>
+
+<td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(s.name)}</td>
+
+<td class="py-3 px-4 text-xs text-slate-600">${escapeHtml(s.email)}</td>
+
+<td class="py-3 px-4 text-xs font-bold">Grade ${escapeHtml(s.grade)}</td>
+
+<td class="py-3 px-4 text-xs text-slate-600">${escapeHtml(teamNames.join(", ") || "None")}</td>
+
+<td class="py-3 px-4 text-right whitespace-nowrap space-x-3">
+
+<button onclick="openAdVaultVerifyModal('${escapeHtml(s.email)}', '${escapeHtml(s.name)}', 'STUDENT')" class="text-xs font-bold text-forces-royal hover:underline">View Password</button>
+
+<button onclick="deleteStudentFromDirectory('${s.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
+
+</td>
+
+</tr>
+
+`;
+
+}).join("");
+
+} 
     
     function publishAnnouncement(e) {
       e.preventDefault();
