@@ -3952,7 +3952,8 @@ function createIsolatedAuthClient() {
               ${s.diaaFilePath ? `<div><button onclick="viewStudentPhysical('${escapeHtml(s.diaaFilePath)}')" class="text-[11px] font-bold text-forces-royal hover:underline">View Uploaded Physical ↗</button></div>` : ""}
             </td>
             <td class="py-3 px-4 text-xs text-slate-600">${escapeHtml(teamNames.join(", ") || "None")}</td>
-            <td class="py-3 px-4 text-right">
+            <td class="py-3 px-4 text-right whitespace-nowrap space-x-3">
+              <button onclick="openAdVaultVerifyModal('${escapeHtml(s.email)}', '${escapeHtml(s.name)}', 'STUDENT')" class="text-xs font-bold text-forces-royal hover:underline">View Password</button>
               <button onclick="deleteStudentFromDirectory('${s.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
             </td>
           </tr>
