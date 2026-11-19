@@ -553,6 +553,20 @@
       </div>
     </div>
 
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-wider text-forces-royal">DIAA Clearance</span>
+        <h2 class="font-display text-xl font-bold text-forces-blue uppercase">Upload DIAA Physical Form (PDF or Photo)</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Submit your signed pre-participation physical evaluation for Athletic Director review.</p>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <input type="file" id="diaa-file-input" accept=".pdf,image/*" class="text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-50 file:text-forces-blue hover:file:bg-sky-100" />
+        <button onclick="uploadDiaaPhysical()" class="px-4 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white text-xs font-bold transition shrink-0">
+          Upload Form
+        </button>
+      </div>
+    </div>
+    
     <div id="student-no-teams-box" class="hidden bg-white rounded-2xl border border-slate-200 p-8 text-center max-w-xl mx-auto shadow-sm mb-8">
       <div class="w-12 h-12 rounded-2xl bg-sky-100 text-forces-blue flex items-center justify-center mx-auto mb-3 font-bold text-xl">!</div>
       <h2 class="font-display text-2xl font-bold text-forces-blue uppercase">Not Listed on a Team Roster Yet</h2>
