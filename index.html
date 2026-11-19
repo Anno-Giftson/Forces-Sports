@@ -1830,6 +1830,7 @@
           excusals: state.excusals,
           announcements: state.announcements,
           staffUsers: (state.staffUsers || []).map(({ password, tempPassword, twoFactorSecret, ...safeStaff }) => safeStaff),
+          studentDirectory: (state.studentDirectory || []).map(({ password, ...safeStudent }) => safeStudent),
           alertSubscribers: state.alertSubscribers,
           teacherMailingList: state.teacherMailingList,
           urgentAlert: state.urgentAlert,
