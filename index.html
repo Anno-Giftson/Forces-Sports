@@ -3835,7 +3835,7 @@ async function verify2faCode(e) {
         return;
       }
 
-      tbody.innerHTML = state.studentDirectory.map(s => {
+     tbody.innerHTML = state.studentDirectory.map(s => {
         const teamNames = state.teams
           .filter(t => (t.roster || []).some(r => (r.email || "").toLowerCase() === s.email.toLowerCase()))
           .map(t => t.name);
@@ -3844,12 +3844,14 @@ async function verify2faCode(e) {
             <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(s.name)}</td>
             <td class="py-3 px-4 text-xs text-slate-600">${escapeHtml(s.email)}</td>
             <td class="py-3 px-4 text-xs font-bold">Grade ${escapeHtml(s.grade)}</td>
-            <td class="py-3 px-4">
+            <td class="py-3 px-4 space-y-1">
               <select onchange="updateStudentDiaaStatus('${s.id}', this.value)" class="px-2.5 py-1 rounded-lg border border-slate-300 text-xs font-bold bg-white">
                 <option value="Cleared" ${s.diaaStatus === "Cleared" ? "selected" : ""}>Cleared</option>
+                <option value="Pending Review" ${s.diaaStatus === "Pending Review" ? "selected" : ""}>Pending Review</option>
                 <option value="Pending Physical" ${s.diaaStatus === "Pending Physical" ? "selected" : ""}>Pending Physical</option>
                 <option value="Not Cleared" ${s.diaaStatus === "Not Cleared" ? "selected" : ""}>Not Cleared</option>
               </select>
+              ${s.diaaFilePath ? `<div><button onclick="viewStudentPhysical('${escapeHtml(s.diaaFilePath)}')" class="text-[11px] font-bold text-forces-royal hover:underline">View Uploaded Physical ↗</button></div>` : ""}
             </td>
             <td class="py-3 px-4 text-xs text-slate-600">${escapeHtml(teamNames.join(", ") || "None")}</td>
             <td class="py-3 px-4 text-right">
@@ -3859,7 +3861,7 @@ async function verify2faCode(e) {
         `;
       }).join("");
     }
-
+    
     function publishAnnouncement(e) {
       e.preventDefault();
       const title = document.getElementById("news-title").value.trim();
