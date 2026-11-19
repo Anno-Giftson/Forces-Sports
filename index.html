@@ -3794,10 +3794,7 @@ async function verify2faCode(e) {
         email,
         grade
       });
-      persistState();
-      renderStudentDirectoryTable();
-      loadAdminTeamEditor();
-      e.target.reset();
+      
       persistState();
       renderStudentDirectoryTable();
       loadAdminTeamEditor();
@@ -3819,29 +3816,6 @@ async function verify2faCode(e) {
       renderPublicPortal();
     }
 
-      const safeEmail = currentSession.email.replace(/[^a-z0-9]/gi, "_");
-      const filePath = `${safeEmail}/${Date.now()}_${file.name}`;
-
-      showToast("Uploading DIAA physical...", "info");
-      const { error } = await supabaseClient.storage
-        .from("diaa-physicals")
-        .upload(filePath, file, { upsert: true });
-
-      if (error) {
-        showToast("Upload failed: " + error.message, "error");
-        return;
-      }
-
-      const stu = state.studentDirectory.find(s => s.email.toLowerCase() === currentSession.email.toLowerCase());
-      if (stu) {
-        stu.diaaStatus = "Pending Review";
-        stu.diaaFilePath = filePath;
-        persistState();
-        renderStudentPortal();
-      }
-      fileInput.value = "";
-      showToast("Physical uploaded! Status updated to Pending Review.", "success");
-    }
     
     function renderStudentDirectoryTable() {
 
