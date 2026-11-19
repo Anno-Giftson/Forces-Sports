@@ -4025,9 +4025,10 @@ function createIsolatedAuthClient() {
             </td>
             <td class="py-3 px-4 text-xs text-slate-700 max-w-xs">${escapeHtml(sportNames)}</td>
             <td class="py-3 px-4 text-right whitespace-nowrap space-x-2">
-              <button onclick="openEditStaffModal('${u.id}')" class="text-xs font-bold text-forces-royal hover:underline">Edit Info</button>
-              ${u.id !== currentSession.id ? `<button onclick="deleteStaffUser('${u.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>` : ""}
-            </td>
+           ${currentSession.id === "ad-primary" && u.id !== currentSession.id ? `<button onclick="openAdVaultVerifyModal('${escapeHtml(u.email)}', '${escapeHtml(u.name)}', 'STAFF')" class="text-xs font-bold text-amber-700 hover:underline">View Password</button>` : ""}
+           <button onclick="openEditStaffModal('${u.id}')" class="text-xs font-bold text-forces-royal hover:underline">Edit Info</button>
+           ${u.id !== currentSession.id ? `<button onclick="deleteStaffUser('${u.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>` : ""}
+         </td>
           </tr>
         `;
       }).join("");
