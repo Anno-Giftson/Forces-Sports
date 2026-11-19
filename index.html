@@ -3699,8 +3699,12 @@ async function verify2faCode(e) {
       showToast("Urgent alert banner cleared.", "info");
     }
 
-    function addStudentToDirectory(e) {
+    async function addStudentToDirectory(e) {
       e.preventDefault();
+      if (!navigator.onLine) {
+        showToast("You are offline. Reconnect to register students.", "error");
+        return;
+      }
       const name = document.getElementById("new-stu-name").value.trim();
       const email = document.getElementById("new-stu-email").value.trim().toLowerCase();
       const grade = document.getElementById("new-stu-grade").value;
@@ -3712,13 +3716,18 @@ async function verify2faCode(e) {
         return;
       }
 
+      const { error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) {
+        showToast("Student registration failed: " + error.message, "error");
+        return;
+      }
+
       state.studentDirectory.push({
         id: `stu-${Date.now()}`,
         name,
         email,
         grade,
-        diaaStatus,
-        password
+        diaaStatus
       });
       persistState();
       renderStudentDirectoryTable();
