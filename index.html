@@ -1839,22 +1839,26 @@
         const cfg = state.supabaseConfig || SUPABASE_DEFAULT;
         state.lastUpdated = state.lastUpdated || Date.now();
         const payloadToSave = {
-          lastUpdated: state.lastUpdated,
-          teams: state.teams,
-          games: state.games,
-          practices: state.practices,
-          excusals: state.excusals,
-          announcements: state.announcements,
-          staffUsers: state.staffUsers,
-          studentDirectory: state.studentDirectory,
-          alertSubscribers: state.alertSubscribers,
-          teacherMailingList: state.teacherMailingList,
-          urgentAlert: state.urgentAlert,
-          teamChatPermissions: state.teamChatPermissions,
-          chatGroups: state.chatGroups,
-          chatMessages: state.chatMessages.slice(-500),
-          webhookConfig: state.webhookConfig
-        };
+    lastUpdated: state.lastUpdated,
+    teams: state.teams,
+    games: state.games,
+    practices: state.practices,
+    excusals: state.excusals,
+    announcements: state.announcements,
+    
+    // CHANGE 1: Strip passwords from staff profiles before they go to the cloud
+    staffUsers: (state.staffUsers || []).map(({ password, tempPassword, ...safeStaff }) => safeStaff),
+    
+    // CHANGE 2: The line for "studentDirectory" has been deleted entirely so private student data is not uploaded
+    
+    alertSubscribers: state.alertSubscribers,
+    teacherMailingList: state.teacherMailingList,
+    urgentAlert: state.urgentAlert,
+    teamChatPermissions: state.teamChatPermissions,
+    chatGroups: state.chatGroups,
+    chatMessages: state.chatMessages.slice(-500),
+    webhookConfig: state.webhookConfig
+  };
         const { error } = await supabaseClient
           .from(cfg.tableName || "csw_forces_state")
           .upsert({ id: "primary", payload: payloadToSave, updated_at: new Date().toISOString() });
