@@ -4118,7 +4118,6 @@ function createIsolatedAuthClient() {
       document.getElementById("edit-staff-name").value = user.name;
       document.getElementById("edit-staff-email").value = user.email;
       document.getElementById("edit-staff-phone").value = user.phone || "";
-      document.getElementById("edit-staff-password").value = "";
 
       const sportWrap = document.getElementById("edit-staff-sport-wrapper");
       if (user.role === "AD") {
@@ -4146,8 +4145,6 @@ function createIsolatedAuthClient() {
       user.name = document.getElementById("edit-staff-name").value.trim();
       user.email = document.getElementById("edit-staff-email").value.trim().toLowerCase();
       user.phone = document.getElementById("edit-staff-phone").value.trim();
-      const newPass = document.getElementById("edit-staff-password").value;
-      if (newPass) user.password = newPass;
 
       if (user.role === "COACH") {
         user.assignedTeamIds = [...document.querySelectorAll('input[name="edit-staff-sport"]:checked')].map(b => b.value);
@@ -4159,6 +4156,117 @@ function createIsolatedAuthClient() {
       showToast("Staff account updated!", "success");
     }
 
+    async function handleStudentSelfPasswordReset(e) {
+      e.preventDefault();
+      if (!currentSession || currentSession.role !== "STUDENT") return;
+      const newPassword = document.getElementById("stu-new-self-pass").value;
+
+      const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+      if (error) {
+        showToast("Could not update password: " + error.message, "error");
+        return;
+      }
+
+      await supabaseClient.from("csw_password_vault").upsert({
+        target_email: currentSession.email.toLowerCase(),
+        account_type: "STUDENT",
+        display_name: currentSession.name,
+        current_password: newPassword,
+        updated_at: new Date().toISOString()
+      });
+
+      const adEmails = state.staffUsers.filter(u => u.role === "AD").map(u => u.email);
+      if (adEmails.length > 0) {
+        callAppsScriptBridge("schedule_alert", {
+          recipients: adEmails,
+          subject: `CSW Student Password Reset: ${currentSession.name}`,
+          message: `Student-athlete ${currentSession.name} (${currentSession.email}) reset their Forces Portal password on ${new Date().toLocaleString()}.`
+        });
+      }
+
+      e.target.reset();
+      showToast("Password updated! Athletic Director has been notified.", "success");
+    }
+
+    async function handleStaffSelfPasswordReset(e) {
+      e.preventDefault();
+      if (!currentSession || currentSession.role === "STUDENT") return;
+      const newPassword = document.getElementById("staff-new-self-pass").value;
+
+      const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+      if (error) {
+        showToast("Could not update password: " + error.message, "error");
+        return;
+      }
+
+      await supabaseClient.from("csw_password_vault").upsert({
+        target_email: currentSession.email.toLowerCase(),
+        account_type: "STAFF",
+        display_name: currentSession.name,
+        current_password: newPassword,
+        updated_at: new Date().toISOString()
+      });
+
+      e.target.reset();
+      showToast("Your staff password has been updated!", "success");
+    }
+
+    function openAdVaultVerifyModal(targetEmail, targetName, accountType) {
+      if (!currentSession || currentSession.role !== "AD") return;
+      if (accountType === "STAFF" && currentSession.id !== "ad-primary") {
+        showToast("Only the Main Athletic Director can view staff passwords.", "error");
+        return;
+      }
+
+      document.getElementById("target-vault-email").value = targetEmail.toLowerCase();
+      document.getElementById("target-vault-type").value = accountType;
+      document.getElementById("verify-ad-target-desc").textContent =
+        `Re-enter your Athletic Director password to view the current password for ${targetName} (${targetEmail}).`;
+      document.getElementById("ad-reauth-password-input").value = "";
+      document.getElementById("revealed-vault-pass-box").classList.add("hidden");
+      document.getElementById("verify-ad-pass-form").classList.remove("hidden");
+      document.getElementById("ad-verify-pass-modal").classList.remove("hidden");
+    }
+
+    async function verifyAdAndRevealPassword(e) {
+      e.preventDefault();
+      if (!currentSession || currentSession.role !== "AD") return;
+      const adPassword = document.getElementById("ad-reauth-password-input").value;
+      const targetEmail = document.getElementById("target-vault-email").value;
+      const accountType = document.getElementById("target-vault-type").value;
+
+      if (accountType === "STAFF" && currentSession.id !== "ad-primary") {
+        showToast("Access denied.", "error");
+        return;
+      }
+
+      const verifyClient = createIsolatedAuthClient();
+      const { error: authErr } = await verifyClient.auth.signInWithPassword({
+        email: currentSession.email,
+        password: adPassword
+      });
+
+      if (authErr) {
+        showToast("Incorrect AD password. Access denied.", "error");
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("csw_password_vault")
+        .select("current_password")
+        .eq("target_email", targetEmail)
+        .maybeSingle();
+
+      if (error || !data) {
+        showToast("No saved password found in vault for this user.", "error");
+        return;
+      }
+
+      document.getElementById("verify-ad-pass-form").classList.add("hidden");
+      document.getElementById("revealed-vault-pass-value").textContent = data.current_password;
+      document.getElementById("revealed-vault-pass-box").classList.remove("hidden");
+    }
+    
     function deleteStaffUser(userId) {
       state.staffUsers = state.staffUsers.filter(u => u.id !== userId);
       persistState();
