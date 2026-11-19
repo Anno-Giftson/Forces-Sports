@@ -2118,6 +2118,20 @@
       document.getElementById("login-modal").classList.remove("hidden");
     }
 
+    function openLoginModal() {
+      resetStaffLoginModal();
+      document.getElementById("login-modal").classList.remove("hidden");
+    }
+
+    function resetStaffLoginModal() {
+      pending2faUser = null;
+      activeMfaFactorId = null;
+      document.getElementById("login-step-1").classList.remove("hidden");
+      document.getElementById("login-step-2").classList.add("hidden");
+      document.getElementById("mfa-enroll-box").classList.add("hidden");
+      document.getElementById("twofa-code-input").value = "";
+    }
+
     let activeMfaFactorId = null;
 
 async function handleStaffStep1(e) {
