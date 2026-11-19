@@ -3800,17 +3800,6 @@ async function verify2faCode(e) {
         }
       });
     }
-    
-function createIsolatedAuthClient() {
-      const cfg = state.supabaseConfig || SUPABASE_DEFAULT;
-      return window.supabase.createClient(cfg.url, cfg.anonKey, {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-          detectSessionInUrl: false
-        }
-      });
-    }
 
     async function addStudentToDirectory(e) {
       e.preventDefault();
