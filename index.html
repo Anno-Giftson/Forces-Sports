@@ -1534,12 +1534,12 @@
         </div>
         <button onclick="closeModal('setup-ad-modal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
       </div>
-      <p class="text-xs text-slate-500 mb-4">Enter the CSW Department Setup Key (<span class="font-mono font-bold text-slate-700">CSW-AD-19807</span>) to create or reset the primary Athletic Director account.</p>
+      <p class="text-xs text-slate-500 mb-4">Enter the CSW Department Setup Key provided by the school administration to initialize the primary Athletic Director account.</p>
 
       <form onsubmit="handleSetupAd(event)" class="space-y-3.5">
         <div>
           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Department Setup Key</label>
-          <input type="text" id="setup-ad-key" required placeholder="CSW-AD-19807" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono uppercase" />
+          <input type="text" id="setup-ad-key" required placeholder="Enter setup key" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono uppercase" />
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Athletic Director Name</label>
@@ -1551,7 +1551,7 @@
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">2FA Mobile Phone</label>
-          <input type="tel" id="setup-ad-phone" required placeholder="(302) 555-0100" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+          <input type="tel" id="setup-ad-phone" required placeholder="(XXX) XXX XXXX" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Create Password</label>
@@ -1816,7 +1816,6 @@
       secret: "CSW-2FA-BRIDGE"
     };
 
-    const AD_SETUP_KEY = "CSW-AD-19807";
     const LOCAL_CACHE_KEY = "csw_forces_portal_cache_v3";
     const SESSION_KEY = "csw_forces_session_v3";
     const CHAT_READ_KEY = "csw_forces_chat_read_v1";
@@ -2361,29 +2360,39 @@
         showToast("You are offline. Please reconnect to initialize accounts.", "error");
         return;
       }
+
       const key = document.getElementById("setup-ad-key").value.trim().toUpperCase();
-      if (key !== AD_SETUP_KEY) {
-        showToast("Invalid Department Setup Key.", "error");
-        return;
-      }
       const name = document.getElementById("setup-ad-name").value.trim();
       const email = document.getElementById("setup-ad-email").value.trim().toLowerCase();
       const phone = document.getElementById("setup-ad-phone").value.trim();
       const password = document.getElementById("setup-ad-pass").value;
 
+      // 1. Create the Supabase Auth account
       const { data, error } = await supabaseClient.auth.signUp({
         email: email,
         password: password
       });
-      
+
       if (error) {
         showToast("Setup failed: " + error.message, "error");
         return;
       }
 
+      // 2. Verify the secret key server-side via Supabase RPC
+      const { data: isSuccess, error: rpcError } = await supabaseClient.rpc('claim_ad_role', {
+        submitted_key: key,
+        ad_name: name
+      });
+
+      if (rpcError || !isSuccess) {
+        showToast("Invalid Department Setup Key or AD already exists.", "error");
+        return;
+      }
+
+      // 3. Update local UI state and lock the setup modal
       state.staffUsers = state.staffUsers.filter(u => u.role !== "AD");
       state.staffUsers.unshift({
-        id: "ad-primary",
+        id: data.user?.id || "ad-primary",
         role: "AD",
         name,
         email,
@@ -2393,18 +2402,18 @@
 
       state.setupComplete = true;
       persistState();
-      
+
       const setupModal = document.getElementById("setup-ad-modal");
       if (setupModal) setupModal.remove();
       window.openSetupAdModal = () => { console.warn("Initial setup is permanently locked."); };
-      
+
       closeModal("setup-ad-modal");
       updateAuthUI();
       showToast("Athletic Director account initialized! Sign in with Staff Login.", "success");
       openLoginModal();
       document.getElementById("login-email").value = email;
     }
-
+    
     function openLoginModal() {
       resetStaffLoginModal();
       document.getElementById("login-modal").classList.remove("hidden");
