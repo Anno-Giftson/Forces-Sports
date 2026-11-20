@@ -2417,17 +2417,6 @@
         return;
       }
 
-      // 2. Verify the secret key server-side via Supabase RPC
-      const { data: isSuccess, error: rpcError } = await supabaseClient.rpc('claim_ad_role', {
-        submitted_key: key,
-        ad_name: name
-      });
-
-      if (rpcError || !isSuccess) {
-        showToast("Invalid Department Setup Key or AD already exists.", "error");
-        return;
-      }
-
       // 2b. Save AD profile into csw_profiles so it loads on every refresh
       if (data?.user) {
         await supabaseClient.from("csw_profiles").upsert({
@@ -3725,9 +3714,14 @@ async function verify2faCode(e) {
       renderActiveChatChannel();
     }
     
-    function deleteChatMessage(msgId) {
+    async function deleteChatMessage(msgId) {
+      const { error } = await supabaseClient.from("csw_chat_messages").delete().eq("id", msgId);
+      if (error) {
+        showToast("Could not delete message: " + error.message, "error");
+        return;
+      }
       state.chatMessages = state.chatMessages.filter(m => m.id !== msgId);
-      persistState();
+      saveLocalCache();
       renderActiveChatChannel();
       showToast("Message removed.", "info");
     }
@@ -4674,7 +4668,7 @@ const coachesListEl = document.getElementById("admin-program-coaches-list");
         });
       }
       state.studentDirectory.push({
-        id: `stu-${Date.now()}`,
+        id: data.user.id,
         name,
         email,
         grade
@@ -4848,7 +4842,7 @@ if (!error && data?.user) {
         }
 
         state.studentDirectory.push({
-          id: `stu-${Date.now()}-${i}`,
+          id: data?.user?.id || `stu-${Date.now()}-${i}`,
           name: stu.name,
           email: stu.email,
           grade: stu.grade
@@ -4981,7 +4975,7 @@ return `
             </td>
             <td class="py-3 px-4 text-xs text-slate-700 max-w-xs">${escapeHtml(sportNames)}</td>
             <td class="py-3 px-4 text-right whitespace-nowrap space-x-2">
-           ${currentSession.id === "ad-primary" && u.id !== currentSession.id ? `<button onclick="sendResetEmailById('${u.id}', 'STAFF')" class="text-xs font-bold text-amber-700 hover:underline">Send Password Reset</button>` : ""}
+           ${currentSession.role === "AD" && u.id !== currentSession.id ? `<button onclick="sendResetEmailById('${u.id}', 'STAFF')" class="text-xs font-bold text-amber-700 hover:underline">Send Password Reset</button>` : ""}
            <button onclick="openEditStaffModal('${u.id}')" class="text-xs font-bold text-forces-royal hover:underline">Edit Info</button>
            ${u.id !== currentSession.id ? `<button onclick="deleteStaffUser('${u.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>` : ""}
          </td>
@@ -5045,13 +5039,8 @@ return `
         });
       }
       
-      if (error) {
-        showToast("Provisioning failed: " + error.message, "error");
-        return;
-      }
-      
       state.staffUsers.push({
-        id: `staff-${Date.now()}`,
+        id: data.user.id,
         role,
         name,
         email,
