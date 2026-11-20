@@ -511,6 +511,13 @@
           </div>
         </div>
         <div class="space-y-6">
+          
+          <!-- Coaching Staff Card (Auto-populated from AD assignments + editable) -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h3 class="font-display text-lg font-bold text-forces-blue uppercase mb-3">Coaching Staff</h3>
+            <div id="sport-coaches-list" class="space-y-3"></div>
+          </div>
+          
           <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <h3 class="font-display text-lg font-bold text-forces-blue uppercase mb-3">Quick Facts</h3>
             <dl class="space-y-2.5 text-sm">
@@ -979,6 +986,34 @@
           </div>
         </form>
 
+        <!-- Program Coaching Staff (Auto-synced + Editable) -->
+        <div class="py-6 border-b border-slate-200 space-y-4">
+          <div>
+            <h3 class="font-display text-lg font-bold text-forces-blue uppercase">Program Coaching Staff</h3>
+            <p class="text-xs text-slate-500">Coaches assigned to this sport by the AD appear automatically. You can also add assistant coaches or update titles below.</p>
+          </div>
+          <form onsubmit="addProgramCoachEntry(event)" class="grid sm:grid-cols-12 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div class="sm:col-span-4">
+              <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Coach Name</label>
+              <input type="text" id="prog-coach-name" required placeholder="e.g., Josh Robinson" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Title</label>
+              <input type="text" id="prog-coach-title" required value="Head Coach" placeholder="e.g., Head Coach / Assistant" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Email</label>
+              <input type="email" id="prog-coach-email" required placeholder="coach@charterschool.org" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
+            </div>
+            <div class="sm:col-span-2 flex items-end">
+              <button type="submit" class="w-full px-3 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-xs transition">
+                + Add Coach
+              </button>
+            </div>
+          </form>
+          <div id="admin-program-coaches-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+        
         <!-- Roster Management -->
         <div class="pt-6 space-y-5">
           <h3 class="font-display text-lg font-bold text-forces-blue uppercase">Team Roster</h3>
@@ -1013,34 +1048,37 @@
          <p class="text-xs text-slate-500">Build custom forms (e.g., Jersey Size, Banquet RSVP, Tryout Interest) that appear on this sport's public page.</p>
        </div>
 
-       <form onsubmit="createTeamForm(event)" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-         <div class="grid sm:grid-cols-2 gap-3">
-           <div>
-             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Form Title</label>
-             <input type="text" id="new-form-title" required placeholder="e.g., 2026 Uniform Sizing & Gear Form" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
-           </div>
-           <div>
-             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Who Can Submit?</label>
-             <select id="new-form-audience" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
-               <option value="PUBLIC">Anyone (Students, Parents &amp; Visitors)</option>
-               <option value="SIGNED_IN">Signed-In CSW Students &amp; Staff Only</option>
-             </select>
-           </div>
-         </div>
-         <div>
-           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Instructions / Description</label>
-           <input type="text" id="new-form-desc" placeholder="Please submit your shirt size and emergency contact before Friday." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
-         </div>
-         <div>
-           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Form Questions (One per line — add <span class="font-mono">[select: Opt1, Opt2]</span> for dropdowns)</label>
-           <textarea id="new-form-questions" rows="3" required placeholder="Student Full Name&#10;T-Shirt Size [select: Youth L, Adult S, Adult M, Adult L, Adult XL]&#10;Dietary Restrictions or Notes" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono bg-white"></textarea>
-         </div>
-         <div class="flex justify-end">
-           <button type="submit" class="px-4 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-xs transition">
-             + Publish Form to Sport Page
-           </button>
-         </div>
-       </form>
+       <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+            <div class="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Form Title</label>
+                <input type="text" id="new-form-title" placeholder="e.g., 2026 Uniform Sizing & Gear Form" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Who Can Submit?</label>
+                <select id="new-form-audience" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white">
+                  <option value="PUBLIC">Anyone (Students, Parents &amp; Visitors)</option>
+                  <option value="SIGNED_IN">Signed-In CSW Students &amp; Staff Only</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Form Description / Instructions</label>
+              <input type="text" id="new-form-desc" placeholder="Add helpful instructions for athletes or parents..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
+            </div>
+
+            <!-- Visual Question Cards Container -->
+            <div id="visual-form-questions-builder" class="space-y-3"></div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <button type="button" onclick="addVisualFormQuestion()" class="px-4 py-2 rounded-xl bg-white hover:bg-sky-50 text-forces-blue border border-sky-300 font-bold text-xs transition shadow-sm">
+                + Add Question
+              </button>
+              <button type="button" onclick="publishVisualTeamForm()" class="px-5 py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-xs transition shadow-sm">
+                Publish Form to Sport Page
+              </button>
+            </div>
+          </div>
 
        <div id="admin-team-forms-list" class="space-y-3"></div>
      </div>
@@ -2814,6 +2852,17 @@ async function verify2faCode(e) {
       document.getElementById("sport-fact-roster").textContent = `${roster.length} Student-Athletes`;
       document.getElementById("sport-fact-forms").textContent = `${forms.length} Available`;
 
+  const coaches = getProgramCoachesList(team);
+    document.getElementById("sport-coaches-list").innerHTML = coaches.length === 0
+      ? `<p class="text-xs text-slate-500">Coaching staff to be announced.</p>`
+      : coaches.map(c => `
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div class="font-bold text-sm text-slate-900">${escapeHtml(c.name)}</div>
+            <div class="text-xs font-semibold text-forces-royal mt-0.5">${escapeHtml(c.title)}</div>
+            <a href="mailto:${escapeHtml(c.email)}" class="inline-block text-xs text-slate-600 hover:text-forces-blue underline mt-1">${escapeHtml(c.email)}</a>
+          </div>
+        `).join("");
+
       document.getElementById("sport-overview-games").innerHTML = teamGames.length === 0
         ? `<p class="text-xs text-slate-500">No contests scheduled yet.</p>`
         : teamGames.slice(0, 4).map(g => `
@@ -2893,23 +2942,63 @@ async function verify2faCode(e) {
                 ? `<div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-900">Please sign in with your Student or Staff account at the top of the page to submit this form.</div>`
                 : `<form onsubmit="submitTeamFormResponse(event, '${f.id}')" class="space-y-3">
                     ${(f.questions || []).map((q, qIdx) => {
-                      const selectMatch = q.match(/^(.*?)\[select:\s*(.+?)\]$/i);
-                      if (selectMatch) {
-                        const label = selectMatch[1].trim();
-                        const opts = selectMatch[2].split(",").map(o => o.trim()).filter(Boolean);
+                      const label = typeof q === "string" ? q : q.label;
+                      const type = typeof q === "string" ? "short_text" : q.type;
+                      const req = typeof q === "string" ? true : q.required;
+                      const opts = q.options || [];
+
+                      if (type === "dropdown") {
                         return `
                           <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">${escapeHtml(label)}</label>
-                            <select name="q_${qIdx}" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">${escapeHtml(label)} ${req ? '<span class="text-rose-500">*</span>' : ""}</label>
+                            <select name="q_${qIdx}" ${req ? "required" : ""} class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
                               ${opts.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("")}
                             </select>
                           </div>
                         `;
                       }
+                      if (type === "multiple_choice") {
+                        return `
+                          <div>
+                            <div class="text-xs font-bold text-slate-700 mb-1.5">${escapeHtml(label)} ${req ? '<span class="text-rose-500">*</span>' : ""}</div>
+                            <div class="space-y-1.5">
+                              ${opts.map(o => `
+                                <label class="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                                  <input type="radio" name="q_${qIdx}" value="${escapeHtml(o)}" ${req ? "required" : ""} class="text-forces-blue" />
+                                  <span>${escapeHtml(o)}</span>
+                                </label>
+                              `).join("")}
+                            </div>
+                          </div>
+                        `;
+                      }
+                      if (type === "checkboxes") {
+                        return `
+                          <div>
+                            <div class="text-xs font-bold text-slate-700 mb-1.5">${escapeHtml(label)}</div>
+                            <div class="space-y-1.5">
+                              ${opts.map(o => `
+                                <label class="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                                  <input type="checkbox" name="q_${qIdx}" value="${escapeHtml(o)}" class="rounded text-forces-blue" />
+                                  <span>${escapeHtml(o)}</span>
+                                </label>
+                              `).join("")}
+                            </div>
+                          </div>
+                        `;
+                      }
+                      if (type === "paragraph") {
+                        return `
+                          <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">${escapeHtml(label)} ${req ? '<span class="text-rose-500">*</span>' : ""}</label>
+                            <textarea name="q_${qIdx}" rows="3" ${req ? "required" : ""} class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white"></textarea>
+                          </div>
+                        `;
+                      }
                       return `
                         <div>
-                          <label class="block text-xs font-bold text-slate-700 mb-1">${escapeHtml(q)}</label>
-                          <input type="text" name="q_${qIdx}" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
+                          <label class="block text-xs font-bold text-slate-700 mb-1">${escapeHtml(label)} ${req ? '<span class="text-rose-500">*</span>' : ""}</label>
+                          <input type="text" name="q_${qIdx}" ${req ? "required" : ""} class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
                         </div>
                       `;
                     }).join("")}
@@ -2969,16 +3058,135 @@ async function verify2faCode(e) {
       showToast("Photo removed.", "info");
     }
 
-    function createTeamForm(e) {
-      e.preventDefault();
+    let draftFormQuestions = [];
+
+    function resetVisualFormBuilder() {
+      draftFormQuestions = [
+        { id: `q-${Date.now()}`, label: "", type: "short_text", options: ["Option 1", "Option 2"], required: true }
+      ];
+      renderVisualFormBuilder();
+    }
+
+    function addVisualFormQuestion() {
+      draftFormQuestions.push({
+        id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+        label: "",
+        type: "short_text",
+        options: ["Option 1", "Option 2"],
+        required: true
+      });
+      renderVisualFormBuilder();
+    }
+
+    function removeVisualFormQuestion(idx) {
+      if (draftFormQuestions.length <= 1) {
+        showToast("A form needs at least one question.", "info");
+        return;
+      }
+      draftFormQuestions.splice(idx, 1);
+      renderVisualFormBuilder();
+    }
+
+    function updateDraftQuestion(idx, field, value) {
+      if (!draftFormQuestions[idx]) return;
+      draftFormQuestions[idx][field] = value;
+      if (field === "type") renderVisualFormBuilder();
+    }
+
+    function addDraftOption(qIdx) {
+      const q = draftFormQuestions[qIdx];
+      if (!q) return;
+      q.options.push(`Option ${q.options.length + 1}`);
+      renderVisualFormBuilder();
+    }
+
+    function updateDraftOption(qIdx, optIdx, val) {
+      if (draftFormQuestions[qIdx]) draftFormQuestions[qIdx].options[optIdx] = val;
+    }
+
+    function removeDraftOption(qIdx, optIdx) {
+      const q = draftFormQuestions[qIdx];
+      if (!q || q.options.length <= 1) return;
+      q.options.splice(optIdx, 1);
+      renderVisualFormBuilder();
+    }
+
+    function renderVisualFormBuilder() {
+      const wrap = document.getElementById("visual-form-questions-builder");
+      if (!wrap) return;
+      if (draftFormQuestions.length === 0) {
+        resetVisualFormBuilder();
+        return;
+      }
+
+      wrap.innerHTML = draftFormQuestions.map((q, idx) => {
+        const hasChoices = ["dropdown", "multiple_choice", "checkboxes"].includes(q.type);
+        return `
+          <div class="p-4 rounded-xl bg-white border-l-4 border-l-forces-royal border border-slate-200 shadow-sm space-y-3">
+            <div class="grid sm:grid-cols-12 gap-3 items-center">
+              <div class="sm:col-span-7">
+                <input type="text" value="${escapeHtml(q.label)}" oninput="updateDraftQuestion(${idx}, 'label', this.value)" placeholder="Question ${idx + 1} (e.g., T-Shirt Size or Parent Phone)" class="w-full px-3 py-2 rounded-lg border-b-2 border-slate-200 focus:border-forces-royal bg-slate-50 text-sm font-semibold focus:outline-none" />
+              </div>
+              <div class="sm:col-span-5">
+                <select onchange="updateDraftQuestion(${idx}, 'type', this.value)" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 bg-white">
+                  <option value="short_text" ${q.type === "short_text" ? "selected" : ""}>Short Answer</option>
+                  <option value="paragraph" ${q.type === "paragraph" ? "selected" : ""}>Paragraph</option>
+                  <option value="dropdown" ${q.type === "dropdown" ? "selected" : ""}>Dropdown Menu</option>
+                  <option value="multiple_choice" ${q.type === "multiple_choice" ? "selected" : ""}>Multiple Choice (Single)</option>
+                  <option value="checkboxes" ${q.type === "checkboxes" ? "selected" : ""}>Checkboxes (Multi-Select)</option>
+                </select>
+              </div>
+            </div>
+
+            ${hasChoices ? `
+              <div class="pl-3 border-l-2 border-slate-200 space-y-2">
+                ${q.options.map((opt, oIdx) => `
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400 font-mono">${q.type === "checkboxes" ? "☑" : q.type === "multiple_choice" ? "◉" : `${oIdx + 1}.`}</span>
+                    <input type="text" value="${escapeHtml(opt)}" oninput="updateDraftOption(${idx}, ${oIdx}, this.value)" class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs" />
+                    <button type="button" onclick="removeDraftOption(${idx}, ${oIdx})" class="text-xs text-slate-400 hover:text-rose-600 px-1">✕</button>
+                  </div>
+                `).join("")}
+                <button type="button" onclick="addDraftOption(${idx})" class="text-xs font-bold text-forces-royal hover:underline">+ Add Option</button>
+              </div>
+            ` : `<div class="text-xs text-slate-400 italic">${q.type === "paragraph" ? "Long text answer box" : "Short text answer box"}</div>`}
+
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-end gap-4 text-xs">
+              <label class="flex items-center gap-1.5 font-semibold text-slate-600 cursor-pointer">
+                <input type="checkbox" ${q.required ? "checked" : ""} onchange="updateDraftQuestion(${idx}, 'required', this.checked)" class="rounded text-forces-blue" />
+                Required
+              </label>
+              <button type="button" onclick="removeVisualFormQuestion(${idx})" class="font-bold text-rose-600 hover:underline">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function publishVisualTeamForm() {
       const teamId = document.getElementById("admin-team-selector").value;
       const title = document.getElementById("new-form-title").value.trim();
       const audience = document.getElementById("new-form-audience").value;
       const description = document.getElementById("new-form-desc").value.trim();
-      const questions = document.getElementById("new-form-questions").value
-        .split(/\r?\n/).map(l => l.trim()).filter(Boolean);
 
-      if (questions.length === 0) return;
+      if (!title) {
+        showToast("Please enter a Form Title.", "error");
+        return;
+      }
+
+      const validQuestions = draftFormQuestions
+        .filter(q => q.label.trim().length > 0)
+        .map(q => ({
+          label: q.label.trim(),
+          type: q.type,
+          options: (q.options || []).map(o => o.trim()).filter(Boolean),
+          required: !!q.required
+        }));
+
+      if (validQuestions.length === 0) {
+        showToast("Please add at least one question with text.", "error");
+        return;
+      }
 
       state.teamForms.unshift({
         id: `form-${Date.now()}`,
@@ -2986,14 +3194,16 @@ async function verify2faCode(e) {
         title,
         audience,
         description,
-        questions,
+        questions: validQuestions,
         responses: [],
         createdAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
       });
 
       persistState();
+      document.getElementById("new-form-title").value = "";
+      document.getElementById("new-form-desc").value = "";
+      resetVisualFormBuilder();
       renderAdminTeamForms();
-      e.target.reset();
       showToast("Form published to sport page!", "success");
     }
 
@@ -3004,8 +3214,14 @@ async function verify2faCode(e) {
 
       const answers = {};
       (form.questions || []).forEach((q, idx) => {
-        const cleanLabel = q.replace(/\[select:.*?\]/i, "").trim();
-        answers[cleanLabel] = e.target.elements[`q_${idx}`]?.value || "";
+        const label = typeof q === "string" ? q : q.label;
+        const type = typeof q === "string" ? "short_text" : q.type;
+        if (type === "checkboxes") {
+          const checked = [...e.target.querySelectorAll(`input[name="q_${idx}"]:checked`)].map(el => el.value);
+          answers[label] = checked.join(", ");
+        } else {
+          answers[label] = e.target.elements[`q_${idx}`]?.value || "";
+        }
       });
 
       form.responses = form.responses || [];
@@ -3020,6 +3236,27 @@ async function verify2faCode(e) {
       showToast("Form submitted! Thank you.", "success");
     }
 
+    function exportFormResponsesCsv(formId) {
+      const form = state.teamForms.find(f => f.id === formId);
+      if (!form || !(form.responses || []).length) {
+        showToast("No responses to export yet.", "info");
+        return;
+      }
+      const qHeaders = (form.questions || []).map(q => typeof q === "string" ? q : q.label);
+      const rows = [["Submitted At", "Submitted By", ...qHeaders]];
+      form.responses.forEach(r => {
+        rows.push([r.submittedAt, r.submittedBy, ...qHeaders.map(h => r.answers?.[h] || "")]);
+      });
+      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${form.title.replace(/\s+/g, "_")}_Responses.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+        
     function renderAdminTeamForms() {
       const teamId = document.getElementById("admin-team-selector")?.value;
       const container = document.getElementById("admin-team-forms-list");
@@ -3056,27 +3293,6 @@ async function verify2faCode(e) {
           ` : ""}
         </div>
       `).join("");
-    }
-
-    function exportFormResponsesCsv(formId) {
-      const form = state.teamForms.find(f => f.id === formId);
-      if (!form || !(form.responses || []).length) {
-        showToast("No responses to export yet.", "info");
-        return;
-      }
-      const qHeaders = (form.questions || []).map(q => q.replace(/\[select:.*?\]/i, "").trim());
-      const rows = [["Submitted At", "Submitted By", ...qHeaders]];
-      form.responses.forEach(r => {
-        rows.push([r.submittedAt, r.submittedBy, ...qHeaders.map(h => r.answers?.[h] || "")]);
-      });
-      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${form.title.replace(/\s+/g, "_")}_Responses.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
     }
 
     function deleteTeamForm(formId) {
@@ -3982,6 +4198,21 @@ async function verify2faCode(e) {
       document.getElementById("edit-team-email").value = team.email;
       document.getElementById("edit-team-bio").value = team.bio || "";
 
+const coachesListEl = document.getElementById("admin-program-coaches-list");
+    const progCoaches = getProgramCoachesList(team);
+    coachesListEl.innerHTML = progCoaches.length === 0
+      ? `<p class="text-xs text-slate-500 col-span-3">No coaches assigned yet.</p>`
+      : progCoaches.map((c, idx) => `
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+            <div>
+              <div class="font-bold text-sm text-slate-900">${escapeHtml(c.name)}</div>
+              <div class="text-xs text-forces-royal font-semibold">${escapeHtml(c.title)}</div>
+              <div class="text-[11px] text-slate-500">${escapeHtml(c.email)}</div>
+            </div>
+            ${(team.coaches || []).length > idx ? `<button onclick="removeProgramCoachEntry('${team.id}', ${idx})" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>` : `<span class="text-[10px] font-bold text-slate-400">AD Synced</span>`}
+          </div>
+        `).join("");
+  
       const dirSel = document.getElementById("roster-directory-select");
       dirSel.innerHTML = state.studentDirectory.length === 0
         ? `<option value="">No registered students in directory yet</option>`
@@ -4689,14 +4920,10 @@ return `
       });
 
       if (role === "COACH") {
-        assignedTeamIds.forEach(tid => {
-          const team = state.teams.find(t => t.id === tid);
-          if (team && (team.coach === "Coach TBD" || !team.coach)) {
-            team.coach = name;
-            team.email = email;
-          }
-        });
-      }
+      assignedTeamIds.forEach(tid => {
+        syncStaffCoachToTeam(tid, name, email, "Head Coach");
+      });
+    }
 
       persistState();
       renderStaffDirectory();
@@ -4743,6 +4970,9 @@ return `
 
       if (user.role === "COACH") {
         user.assignedTeamIds = [...document.querySelectorAll('input[name="edit-staff-sport"]:checked')].map(b => b.value);
+        user.assignedTeamIds.forEach(tid => {
+        syncStaffCoachToTeam(tid, user.name, user.email, "Head Coach");
+      });
       }
 
       persistState();
@@ -4751,6 +4981,84 @@ return `
       showToast("Staff account updated!", "success");
     }
 
+function syncStaffCoachToTeam(teamId, name, email, title = "Head Coach") {
+    const team = state.teams.find(t => t.id === teamId);
+    if (!team) return;
+    if (!Array.isArray(team.coaches)) team.coaches = [];
+    const existing = team.coaches.find(c => c.email.toLowerCase() === email.toLowerCase());
+    if (existing) {
+      existing.name = name;
+      existing.email = email;
+    } else {
+      team.coaches.push({ name, title, email });
+    }
+    if (team.coach === "Coach TBD" || !team.coach) {
+      team.coach = name;
+      team.email = email;
+    }
+  }
+
+  function getProgramCoachesList(team) {
+    const list = [];
+    const seen = new Set();
+    // 1. Any explicit coaches saved on the team
+    (team.coaches || []).forEach(c => {
+      const key = `${c.name.toLowerCase()}|${c.email.toLowerCase()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        list.push(c);
+      }
+    });
+    // 2. Any staff accounts assigned to this sport by the AD
+    (state.staffUsers || []).forEach(u => {
+      if (u.role === "COACH" && getCoachTeamIds(u).includes(team.id)) {
+        const alreadyByEmail = list.some(c => c.email.toLowerCase() === u.email.toLowerCase());
+        if (!alreadyByEmail) {
+          list.push({ name: u.name, title: "Head Coach", email: u.email });
+        }
+      }
+    });
+    // 3. Fallback to team.coach if set manually and not yet in list
+    if (list.length === 0 && team.coach && team.coach !== "Coach TBD") {
+      list.push({ name: team.coach, title: "Head Coach", email: team.email || "athletics@charterschool.org" });
+    }
+    return list;
+  }
+
+  function addProgramCoachEntry(e) {
+    e.preventDefault();
+    const teamId = document.getElementById("admin-team-selector").value;
+    const team = state.teams.find(t => t.id === teamId);
+    if (!team) return;
+    if (!Array.isArray(team.coaches)) team.coaches = [];
+
+    const name = document.getElementById("prog-coach-name").value.trim();
+    const title = document.getElementById("prog-coach-title").value.trim();
+    const email = document.getElementById("prog-coach-email").value.trim();
+
+    team.coaches.push({ name, title, email });
+    if (title.toLowerCase().includes("head")) {
+      team.coach = name;
+      team.email = email;
+    }
+
+    persistState();
+    loadAdminTeamEditor();
+    renderPublicPortal();
+    e.target.reset();
+    document.getElementById("prog-coach-title").value = "Head Coach";
+    showToast(`${name} added to coaching staff!`, "success");
+  }
+
+  function removeProgramCoachEntry(teamId, idx) {
+    const team = state.teams.find(t => t.id === teamId);
+    if (!team || !Array.isArray(team.coaches)) return;
+    team.coaches.splice(idx, 1);
+    persistState();
+    loadAdminTeamEditor();
+    renderPublicPortal();
+  }
+        
     async function handleStudentSelfPasswordReset(e) {
       e.preventDefault();
       if (!currentSession || currentSession.role !== "STUDENT") return;
