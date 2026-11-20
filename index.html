@@ -451,6 +451,158 @@
     </section>
   </main>
 
+<!-- ========================================================= -->
+  <!-- VIEW 1B: DEDICATED SPORT / PROGRAM PAGE                   -->
+  <!-- ========================================================= -->
+  <section id="sport-detail-view" class="hidden min-h-screen bg-slate-50">
+    <!-- Sport Banner Header -->
+    <div class="hero-pattern text-white py-10 sm:py-14 border-b border-slate-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <button onclick="switchMainView('public'); scrollToSection('teams-section')" class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-sky-300 hover:text-white mb-4 transition">
+          ← Back to All Forces Teams
+        </button>
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="sport-page-season" class="px-2.5 py-0.5 rounded-md bg-white/15 text-sky-200 text-xs font-bold uppercase tracking-wider">Season</span>
+              <span id="sport-page-record" class="px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-xs font-bold">Record: 0-0</span>
+            </div>
+            <h1 id="sport-page-title" class="font-display text-4xl sm:text-5xl font-bold uppercase mt-2 tracking-tight">Program Name</h1>
+            <p id="sport-page-coach" class="text-sm text-slate-300 mt-1">Head Coach: Coach TBD</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <a id="sport-page-email-btn" href="mailto:athletics@charterschool.org" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 text-xs font-bold transition">
+              Contact Head Coach
+            </a>
+            <button id="sport-page-manage-btn" onclick="jumpToManageCurrentSport()" class="hidden px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-forces-navy text-xs font-extrabold transition shadow-md">
+              Manage This Program ⚙
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sport Sub-Navigation Tabs -->
+    <div class="bg-white border-b border-slate-200 sticky top-16 sm:top-20 z-30 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto gap-1 sm:gap-2">
+        <button onclick="switchSportSubTab('overview')" id="sport-subtab-overview" class="px-4 py-3.5 text-sm whitespace-nowrap tab-active transition">Overview &amp; News</button>
+        <button onclick="switchSportSubTab('schedule')" id="sport-subtab-schedule" class="px-4 py-3.5 text-sm font-semibold text-slate-600 hover:text-forces-blue whitespace-nowrap transition">Schedule &amp; Scores</button>
+        <button onclick="switchSportSubTab('roster')" id="sport-subtab-roster" class="px-4 py-3.5 text-sm font-semibold text-slate-600 hover:text-forces-blue whitespace-nowrap transition">Team Roster</button>
+        <button onclick="switchSportSubTab('photos')" id="sport-subtab-photos" class="px-4 py-3.5 text-sm font-semibold text-slate-600 hover:text-forces-blue whitespace-nowrap transition">Photos &amp; Media</button>
+        <button onclick="switchSportSubTab('forms')" id="sport-subtab-forms" class="px-4 py-3.5 text-sm font-semibold text-slate-600 hover:text-forces-blue whitespace-nowrap transition">Team Forms</button>
+      </div>
+    </div>
+
+    <!-- Sport Sub-Tab Panels -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      <!-- Sub-Tab 1: Overview -->
+      <div id="sport-panel-overview" class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h2 class="font-display text-xl font-bold text-forces-blue uppercase mb-3">Program Overview &amp; Coach Notes</h2>
+            <p id="sport-overview-bio" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line"></p>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-display text-lg font-bold text-forces-blue uppercase">Upcoming Contests</h3>
+              <button onclick="switchSportSubTab('schedule')" class="text-xs font-bold text-forces-royal hover:underline">Full Schedule →</button>
+            </div>
+            <div id="sport-overview-games" class="space-y-2.5"></div>
+          </div>
+        </div>
+        <div class="space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h3 class="font-display text-lg font-bold text-forces-blue uppercase mb-3">Quick Facts</h3>
+            <dl class="space-y-2.5 text-sm">
+              <div class="flex justify-between py-1.5 border-b border-slate-100"><dt class="text-slate-500">Season</dt><dd id="sport-fact-season" class="font-bold text-slate-900"></dd></div>
+              <div class="flex justify-between py-1.5 border-b border-slate-100"><dt class="text-slate-500">Conference</dt><dd class="font-bold text-slate-900">Blue Hen (Flight A)</dd></div>
+              <div class="flex justify-between py-1.5 border-b border-slate-100"><dt class="text-slate-500">Roster Size</dt><dd id="sport-fact-roster" class="font-bold text-slate-900"></dd></div>
+              <div class="flex justify-between py-1.5"><dt class="text-slate-500">Active Forms</dt><dd id="sport-fact-forms" class="font-bold text-forces-royal"></dd></div>
+            </dl>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-display text-lg font-bold text-forces-blue uppercase">Featured Photos</h3>
+              <button onclick="switchSportSubTab('photos')" class="text-xs font-bold text-forces-royal hover:underline">Gallery →</button>
+            </div>
+            <div id="sport-overview-photos" class="grid grid-cols-2 gap-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-Tab 2: Schedule & Scores -->
+      <div id="sport-panel-schedule" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+          <h2 class="font-display text-xl font-bold text-forces-blue uppercase">Season Schedule &amp; Results</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-slate-100 border-b border-slate-200 text-xs font-bold uppercase text-slate-600">
+                <th class="py-3 px-6">Date &amp; Time</th>
+                <th class="py-3 px-4">Opponent</th>
+                <th class="py-3 px-4">Location</th>
+                <th class="py-3 px-6 text-right">Result / Status</th>
+              </tr>
+            </thead>
+            <tbody id="sport-schedule-tbody" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sub-Tab 3: Team Roster -->
+      <div id="sport-panel-roster" class="hidden bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <h2 class="font-display text-xl font-bold text-forces-blue uppercase mb-4">Official Program Roster</h2>
+        <div id="sport-roster-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- Sub-Tab 4: Photos & Media -->
+      <div id="sport-panel-photos" class="hidden space-y-6">
+        <!-- Upload bar shown ONLY to AD or assigned Coach -->
+        <div id="sport-photo-upload-card" class="hidden bg-white rounded-2xl border border-sky-200 p-6 shadow-sm">
+          <h3 class="font-display text-lg font-bold text-forces-blue uppercase mb-1">Upload Team Photo</h3>
+          <p class="text-xs text-slate-500 mb-4">Add game action shots, team portraits, or event photos to this sport's public gallery.</p>
+          <form onsubmit="uploadTeamPhoto(event)" class="grid sm:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-5">
+              <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Image File (JPG/PNG/WebP)</label>
+              <input type="file" id="sport-photo-file" accept="image/*" required class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-50 file:text-forces-blue" />
+            </div>
+            <div class="sm:col-span-5">
+              <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Photo Caption</label>
+              <input type="text" id="sport-photo-caption" required placeholder="e.g., Senior Night vs Salesianum" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+            </div>
+            <div class="sm:col-span-2">
+              <button type="submit" class="w-full px-4 py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-xs transition">
+                Upload Photo
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <h2 class="font-display text-xl font-bold text-forces-blue uppercase mb-4">Team Photo Gallery</h2>
+          <div id="sport-photos-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+      </div>
+
+      <!-- Sub-Tab 5: Team Forms (Built-In Coach Form Builder + Fillable Forms) -->
+      <div id="sport-panel-forms" class="hidden space-y-6">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 class="font-display text-xl font-bold text-forces-blue uppercase">Team Forms, Sign-Ups &amp; Surveys</h2>
+              <p class="text-xs text-slate-500">Complete team registration forms, jersey sizing, banquet RSVPs, or parent volunteer sign-ups directly below.</p>
+            </div>
+            <button id="btn-sport-create-form" onclick="jumpToManageCurrentSport()" class="hidden px-4 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white text-xs font-bold transition">
+              + Create / View Responses in Coach Portal
+            </button>
+          </div>
+          <div id="sport-forms-list" class="space-y-6"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
   <!-- ========================================================= -->
   <!-- VIEW 2: INTERNAL TEAM CHAT & GROUP MESSAGING              -->
   <!-- (Accessible ONLY when logged in as AD, Coach, or Athlete) -->
@@ -810,6 +962,12 @@
             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Program Contact Email</label>
             <input type="email" id="edit-team-email" required class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm" />
           </div>
+          
+          <div class="sm:col-span-3">
+         <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Program Overview / Welcome Message (Shown on Sport Page)</label>
+         <textarea id="edit-team-bio" rows="2" placeholder="Welcome to Charter School of Wilmington Athletics..." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+       </div>
+          
           <div class="sm:col-span-3 flex flex-wrap justify-between items-center gap-3">
             <button type="button" onclick="openRosterEmailBlastModal()" class="px-4 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-forces-blue border border-sky-200 font-bold text-xs transition flex items-center gap-1.5">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
@@ -847,6 +1005,46 @@
 
           <div id="admin-roster-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </div>
+
+      <!-- Custom Team Forms Builder (Coaches & ADs) -->
+     <div class="pt-6 mt-6 border-t border-slate-200 space-y-5">
+       <div>
+         <h3 class="font-display text-lg font-bold text-forces-blue uppercase">Custom Team Forms &amp; Surveys</h3>
+         <p class="text-xs text-slate-500">Build custom forms (e.g., Jersey Size, Banquet RSVP, Tryout Interest) that appear on this sport's public page.</p>
+       </div>
+
+       <form onsubmit="createTeamForm(event)" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+         <div class="grid sm:grid-cols-2 gap-3">
+           <div>
+             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Form Title</label>
+             <input type="text" id="new-form-title" required placeholder="e.g., 2026 Uniform Sizing & Gear Form" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
+           </div>
+           <div>
+             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Who Can Submit?</label>
+             <select id="new-form-audience" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
+               <option value="PUBLIC">Anyone (Students, Parents &amp; Visitors)</option>
+               <option value="SIGNED_IN">Signed-In CSW Students &amp; Staff Only</option>
+             </select>
+           </div>
+         </div>
+         <div>
+           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Instructions / Description</label>
+           <input type="text" id="new-form-desc" placeholder="Please submit your shirt size and emergency contact before Friday." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
+         </div>
+         <div>
+           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Form Questions (One per line — add <span class="font-mono">[select: Opt1, Opt2]</span> for dropdowns)</label>
+           <textarea id="new-form-questions" rows="3" required placeholder="Student Full Name&#10;T-Shirt Size [select: Youth L, Adult S, Adult M, Adult L, Adult XL]&#10;Dietary Restrictions or Notes" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono bg-white"></textarea>
+         </div>
+         <div class="flex justify-end">
+           <button type="submit" class="px-4 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-xs transition">
+             + Publish Form to Sport Page
+           </button>
+         </div>
+       </form>
+
+       <div id="admin-team-forms-list" class="space-y-3"></div>
+     </div>
+        
       </div>
     </div>
 
@@ -1188,31 +1386,7 @@
   <!-- ========================================================= -->
   <!-- MODALS                                                    -->
   <!-- ========================================================= -->
-
-  <!-- 1. Team Roster & Schedule Modal -->
-  <div id="team-detail-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
-      <div class="p-6 bg-forces-blue text-white flex items-start justify-between">
-        <div>
-          <span id="modal-team-season" class="px-2.5 py-0.5 rounded-md bg-white/15 text-sky-200 text-xs font-bold uppercase tracking-wider">Season</span>
-          <h3 id="modal-team-name" class="font-display text-3xl font-bold uppercase mt-1">Team Name</h3>
-          <p id="modal-team-meta" class="text-xs text-slate-300 mt-1">Head Coach • Record</p>
-        </div>
-        <button onclick="closeModal('team-detail-modal')" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white">✕</button>
-      </div>
-      <div class="p-6 space-y-6">
-        <div>
-          <h4 class="font-display text-lg font-bold text-forces-blue uppercase mb-3">Team Roster</h4>
-          <div id="modal-team-roster" class="grid sm:grid-cols-2 gap-2.5"></div>
-        </div>
-        <div>
-          <h4 class="font-display text-lg font-bold text-forces-blue uppercase mb-3">Team Schedule &amp; Scores</h4>
-          <div id="modal-team-games" class="space-y-2"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  
   <!-- 2. Student-Athlete Login Modal -->
   <div id="student-login-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
@@ -1682,6 +1856,8 @@
       teamChatPermissions: {},
       chatGroups: [],
       chatMessages: [],
+      teamPhotos: [],
+      teamForms: [],
       supabaseConfig: { ...SUPABASE_DEFAULT },
       webhookConfig: { ...GAS_DEFAULT },
       lastUpdated: 0
@@ -1812,6 +1988,8 @@
         mergedMsgs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
         state.chatMessages = mergedMsgs.slice(-500);
       }
+      if (Array.isArray(payload.teamPhotos)) state.teamPhotos = payload.teamPhotos;
+    if (Array.isArray(payload.teamForms)) state.teamForms = payload.teamForms;
       if (payload.webhookConfig && payload.webhookConfig.url) {
         state.webhookConfig = payload.webhookConfig;
       } else if (!state.webhookConfig || !state.webhookConfig.url) {
@@ -2092,11 +2270,13 @@
       }
 
       const pub = document.getElementById("public-view");
+      const sportView = document.getElementById("sport-detail-view");
       const chat = document.getElementById("team-chat-view");
       const stu = document.getElementById("student-portal-view");
       const adm = document.getElementById("admin-view");
 
       pub.classList.add("hidden");
+      sportView.classList.add("hidden");
       chat.classList.add("hidden");
       stu.classList.add("hidden");
       adm.classList.add("hidden");
@@ -2556,27 +2736,119 @@ async function verify2faCode(e) {
           </div>
           <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
             <a href="mailto:${escapeHtml(t.email)}" class="text-xs font-semibold text-slate-500 hover:text-forces-blue">Contact Coach</a>
-            <button onclick="openTeamDetailModal('${t.id}')" class="px-3.5 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white text-xs font-bold transition">
-              View Roster &amp; Schedule
+            <button onclick="openSportPage('${t.id}')" class="px-3.5 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white text-xs font-bold transition">
+              Open Team Page →
             </button>
           </div>
         </div>
       `).join("");
     }
 
-    function openTeamDetailModal(teamId) {
+    let activeSportPageId = null;
+
+    function openSportPage(teamId, initialTab = "overview") {
       const team = state.teams.find(t => t.id === teamId);
       if (!team) return;
-      document.getElementById("modal-team-season").textContent = `${team.season} Varsity Program`;
-      document.getElementById("modal-team-name").textContent = team.name;
-      document.getElementById("modal-team-meta").textContent = `Head Coach: ${team.coach} • Record: ${team.record} • ${team.email}`;
+      activeSportPageId = teamId;
 
-      const rosterEl = document.getElementById("modal-team-roster");
+      ["public-view", "team-chat-view", "student-portal-view", "admin-view"].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+      });
+      document.getElementById("sport-detail-view").classList.remove("hidden");
+
+      document.getElementById("sport-page-season").textContent = `${team.season} Varsity Program`;
+      document.getElementById("sport-page-record").textContent = `Record: ${team.record}`;
+      document.getElementById("sport-page-title").textContent = team.name;
+      document.getElementById("sport-page-coach").textContent = `Head Coach: ${team.coach} • ${team.email}`;
+      document.getElementById("sport-page-email-btn").href = `mailto:${team.email}`;
+
+      const canManage = currentSession && (currentSession.role === "AD" || canStaffManageTeam(currentSession, team.id));
+      document.getElementById("sport-page-manage-btn").classList.toggle("hidden", !canManage);
+      document.getElementById("sport-photo-upload-card").classList.toggle("hidden", !canManage);
+      document.getElementById("btn-sport-create-form").classList.toggle("hidden", !canManage);
+
+      renderSportPageContent(team);
+      switchSportSubTab(initialTab);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function jumpToManageCurrentSport() {
+      if (!activeSportPageId) return;
+      switchMainView("admin");
+      switchAdminTab("teams");
+      const sel = document.getElementById("admin-team-selector");
+      if (sel) {
+        sel.value = activeSportPageId;
+        loadAdminTeamEditor();
+      }
+    }
+
+    function switchSportSubTab(tab) {
+      ["overview", "schedule", "roster", "photos", "forms"].forEach(t => {
+        const btn = document.getElementById(`sport-subtab-${t}`);
+        const panel = document.getElementById(`sport-panel-${t}`);
+        if (!btn || !panel) return;
+        if (t === tab) {
+          btn.className = "px-4 py-3.5 text-sm whitespace-nowrap tab-active transition";
+          panel.classList.remove("hidden");
+        } else {
+          btn.className = "px-4 py-3.5 text-sm font-semibold text-slate-600 hover:text-forces-blue whitespace-nowrap transition";
+          panel.classList.add("hidden");
+        }
+      });
+    }
+
+    function renderSportPageContent(team) {
+      const teamGames = state.games.filter(g => g.teamId === team.id);
       const roster = team.roster || [];
-      rosterEl.innerHTML = roster.length === 0
-        ? `<p class="text-xs text-slate-500 col-span-2">Official roster will be posted following tryouts.</p>`
+      const photos = (state.teamPhotos || []).filter(p => p.teamId === team.id);
+      const forms = (state.teamForms || []).filter(f => f.teamId === team.id);
+      const canManage = currentSession && (currentSession.role === "AD" || canStaffManageTeam(currentSession, team.id));
+
+      // Overview Bio & Quick Facts
+      document.getElementById("sport-overview-bio").textContent =
+        team.bio || `Welcome to the official Charter School of Wilmington ${team.name} page. Check here for updated game schedules, official rosters, team photos, and program forms.`;
+      document.getElementById("sport-fact-season").textContent = team.season;
+      document.getElementById("sport-fact-roster").textContent = `${roster.length} Student-Athletes`;
+      document.getElementById("sport-fact-forms").textContent = `${forms.length} Available`;
+
+      document.getElementById("sport-overview-games").innerHTML = teamGames.length === 0
+        ? `<p class="text-xs text-slate-500">No contests scheduled yet.</p>`
+        : teamGames.slice(0, 4).map(g => `
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+              <div>
+                <div class="font-bold text-slate-900">${escapeHtml(g.date)} • ${escapeHtml(g.time)}</div>
+                <div class="text-slate-600">${g.homeAway === "Away" ? "@" : "vs"} ${escapeHtml(g.opponent)} (${escapeHtml(g.location)})</div>
+              </div>
+              <span class="font-bold px-2.5 py-1 rounded-lg bg-sky-100 text-forces-blue">
+                ${g.status === "Final" ? `${g.cswScore}-${g.oppScore}` : escapeHtml(g.status)}
+              </span>
+            </div>
+          `).join("");
+
+      document.getElementById("sport-overview-photos").innerHTML = photos.length === 0
+        ? `<p class="text-xs text-slate-500 col-span-2">No team photos uploaded yet.</p>`
+        : photos.slice(0, 4).map(p => `
+            <img src="${escapeHtml(p.url)}" alt="${escapeHtml(p.caption)}" class="w-full h-24 object-cover rounded-xl border border-slate-200" />
+          `).join("");
+
+      // Schedule Tab
+      document.getElementById("sport-schedule-tbody").innerHTML = teamGames.length === 0
+        ? `<tr><td colspan="4" class="py-6 px-6 text-xs text-slate-500 text-center">No games scheduled yet.</td></tr>`
+        : teamGames.map(g => `
+            <tr>
+              <td class="py-3.5 px-6 font-bold text-slate-900">${escapeHtml(g.date)} <span class="text-xs font-normal text-slate-500 block">${escapeHtml(g.time)}</span></td>
+              <td class="py-3.5 px-4 font-semibold">${g.homeAway === "Away" ? "@" : "vs"} ${escapeHtml(g.opponent)}</td>
+              <td class="py-3.5 px-4 text-xs text-slate-600">${escapeHtml(g.location)}</td>
+              <td class="py-3.5 px-6 text-right font-bold text-forces-blue">${g.status === "Final" ? `${g.cswScore} - ${g.oppScore}` : escapeHtml(g.status)}</td>
+            </tr>
+          `).join("");
+
+      // Roster Tab
+      document.getElementById("sport-roster-grid").innerHTML = roster.length === 0
+        ? `<p class="text-xs text-slate-500 col-span-3">Official roster will be posted following tryouts.</p>`
         : roster.map(r => `
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
               <div>
                 <div class="font-bold text-sm text-slate-900">#${escapeHtml(r.number)} ${escapeHtml(r.name)}</div>
                 <div class="text-xs text-slate-500">Grade ${escapeHtml(r.grade)} • ${escapeHtml(r.position)}</div>
@@ -2584,21 +2856,232 @@ async function verify2faCode(e) {
             </div>
           `).join("");
 
-      const gamesEl = document.getElementById("modal-team-games");
-      const teamGames = state.games.filter(g => g.teamId === teamId);
-      gamesEl.innerHTML = teamGames.length === 0
-        ? `<p class="text-xs text-slate-500">No contests scheduled yet.</p>`
-        : teamGames.map(g => `
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-              <div>
-                <span class="font-bold text-slate-900">${escapeHtml(g.date)}</span> •
-                <span>${g.homeAway === "Away" ? "@" : "vs"} ${escapeHtml(g.opponent)}</span>
+      // Photos Tab
+      document.getElementById("sport-photos-grid").innerHTML = photos.length === 0
+        ? `<p class="text-xs text-slate-500 col-span-3">No photos have been added to this program yet.</p>`
+        : photos.map(p => `
+            <div class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 flex flex-col justify-between">
+              <img src="${escapeHtml(p.url)}" alt="${escapeHtml(p.caption)}" class="w-full h-52 object-cover" />
+              <div class="p-3 flex items-center justify-between gap-2 text-xs">
+                <span class="font-semibold text-slate-800">${escapeHtml(p.caption)}</span>
+                ${canManage ? `<button onclick="deleteTeamPhoto('${p.id}', '${escapeHtml(p.storagePath || "")}')" class="text-rose-600 font-bold hover:underline shrink-0">Delete</button>` : ""}
               </div>
-              <span class="font-bold text-forces-blue">${g.status === "Final" ? `${g.cswScore}-${g.oppScore}` : escapeHtml(g.status)}</span>
             </div>
           `).join("");
 
-      document.getElementById("team-detail-modal").classList.remove("hidden");
+      // Forms Tab
+      const formsContainer = document.getElementById("sport-forms-list");
+      if (forms.length === 0) {
+        formsContainer.innerHTML = `<p class="text-xs text-slate-500">No forms have been posted for this team yet.</p>`;
+      } else {
+        formsContainer.innerHTML = forms.map(f => {
+          const lockedOut = f.audience === "SIGNED_IN" && !currentSession;
+          return `
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-sky-100 text-forces-blue text-[11px] font-bold uppercase">${f.audience === "SIGNED_IN" ? "CSW Login Required" : "Open Form"}</span>
+                  <span class="text-xs text-slate-400">Posted ${escapeHtml(f.createdAt || "")}</span>
+                </div>
+                <h3 class="font-display text-xl font-bold text-forces-blue uppercase mt-1">${escapeHtml(f.title)}</h3>
+                ${f.description ? `<p class="text-xs text-slate-600 mt-1">${escapeHtml(f.description)}</p>` : ""}
+              </div>
+
+              ${lockedOut
+                ? `<div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-900">Please sign in with your Student or Staff account at the top of the page to submit this form.</div>`
+                : `<form onsubmit="submitTeamFormResponse(event, '${f.id}')" class="space-y-3">
+                    ${(f.questions || []).map((q, qIdx) => {
+                      const selectMatch = q.match(/^(.*?)\[select:\s*(.+?)\]$/i);
+                      if (selectMatch) {
+                        const label = selectMatch[1].trim();
+                        const opts = selectMatch[2].split(",").map(o => o.trim()).filter(Boolean);
+                        return `
+                          <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">${escapeHtml(label)}</label>
+                            <select name="q_${qIdx}" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
+                              ${opts.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("")}
+                            </select>
+                          </div>
+                        `;
+                      }
+                      return `
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 mb-1">${escapeHtml(q)}</label>
+                          <input type="text" name="q_${qIdx}" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
+                        </div>
+                      `;
+                    }).join("")}
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-xs transition">
+                      Submit Response
+                    </button>
+                  </form>`
+              }
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    async function uploadTeamPhoto(e) {
+      e.preventDefault();
+      if (!activeSportPageId) return;
+      const fileInput = document.getElementById("sport-photo-file");
+      const caption = document.getElementById("sport-photo-caption").value.trim();
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+
+      const path = `${activeSportPageId}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi, "_")}`;
+      showToast("Uploading photo...", "info");
+
+      const { error } = await supabaseClient.storage.from("team-photos").upload(path, file, { upsert: true });
+      if (error) {
+        showToast("Upload failed: " + error.message, "error");
+        return;
+      }
+
+      const { data: pubData } = supabaseClient.storage.from("team-photos").getPublicUrl(path);
+      state.teamPhotos.unshift({
+        id: `photo-${Date.now()}`,
+        teamId: activeSportPageId,
+        url: pubData.publicUrl,
+        storagePath: path,
+        caption,
+        uploadedBy: currentSession.name
+      });
+
+      persistState();
+      e.target.reset();
+      const team = state.teams.find(t => t.id === activeSportPageId);
+      if (team) renderSportPageContent(team);
+      showToast("Photo added to team gallery!", "success");
+    }
+
+    async function deleteTeamPhoto(photoId, storagePath) {
+      if (storagePath) {
+        await supabaseClient.storage.from("team-photos").remove([storagePath]);
+      }
+      state.teamPhotos = state.teamPhotos.filter(p => p.id !== photoId);
+      persistState();
+      const team = state.teams.find(t => t.id === activeSportPageId);
+      if (team) renderSportPageContent(team);
+      showToast("Photo removed.", "info");
+    }
+
+    function createTeamForm(e) {
+      e.preventDefault();
+      const teamId = document.getElementById("admin-team-selector").value;
+      const title = document.getElementById("new-form-title").value.trim();
+      const audience = document.getElementById("new-form-audience").value;
+      const description = document.getElementById("new-form-desc").value.trim();
+      const questions = document.getElementById("new-form-questions").value
+        .split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+      if (questions.length === 0) return;
+
+      state.teamForms.unshift({
+        id: `form-${Date.now()}`,
+        teamId,
+        title,
+        audience,
+        description,
+        questions,
+        responses: [],
+        createdAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      });
+
+      persistState();
+      renderAdminTeamForms();
+      e.target.reset();
+      showToast("Form published to sport page!", "success");
+    }
+
+    function submitTeamFormResponse(e, formId) {
+      e.preventDefault();
+      const form = state.teamForms.find(f => f.id === formId);
+      if (!form) return;
+
+      const answers = {};
+      (form.questions || []).forEach((q, idx) => {
+        const cleanLabel = q.replace(/\[select:.*?\]/i, "").trim();
+        answers[cleanLabel] = e.target.elements[`q_${idx}`]?.value || "";
+      });
+
+      form.responses = form.responses || [];
+      form.responses.push({
+        submittedAt: new Date().toLocaleString(),
+        submittedBy: currentSession ? `${currentSession.name} (${currentSession.email})` : "Public Visitor",
+        answers
+      });
+
+      persistState();
+      e.target.reset();
+      showToast("Form submitted! Thank you.", "success");
+    }
+
+    function renderAdminTeamForms() {
+      const teamId = document.getElementById("admin-team-selector")?.value;
+      const container = document.getElementById("admin-team-forms-list");
+      if (!container) return;
+
+      const forms = (state.teamForms || []).filter(f => f.teamId === teamId);
+      if (forms.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500">No forms created for this program yet.</p>`;
+        return;
+      }
+
+      container.innerHTML = forms.map(f => `
+        <div class="p-4 rounded-xl bg-white border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <span class="font-bold text-sm text-forces-blue">${escapeHtml(f.title)}</span>
+              <span class="ml-2 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">${(f.responses || []).length} Response(s)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="exportFormResponsesCsv('${f.id}')" class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">Export CSV</button>
+              <button onclick="deleteTeamForm('${f.id}')" class="text-xs font-bold text-rose-600 hover:underline">Delete</button>
+            </div>
+          </div>
+          ${(f.responses || []).length > 0 ? `
+            <div class="mt-2 max-h-40 overflow-y-auto divide-y divide-slate-100 border-t border-slate-100 pt-2 text-xs">
+              ${f.responses.map(r => `
+                <div class="py-1.5">
+                  <span class="font-bold text-slate-800">${escapeHtml(r.submittedBy)}</span>
+                  <span class="text-slate-400 ml-1">(${escapeHtml(r.submittedAt)})</span>:
+                  <span class="text-slate-600">${Object.entries(r.answers || {}).map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(v)}`).join(" • ")}</span>
+                </div>
+              `).join("")}
+            </div>
+          ` : ""}
+        </div>
+      `).join("");
+    }
+
+    function exportFormResponsesCsv(formId) {
+      const form = state.teamForms.find(f => f.id === formId);
+      if (!form || !(form.responses || []).length) {
+        showToast("No responses to export yet.", "info");
+        return;
+      }
+      const qHeaders = (form.questions || []).map(q => q.replace(/\[select:.*?\]/i, "").trim());
+      const rows = [["Submitted At", "Submitted By", ...qHeaders]];
+      form.responses.forEach(r => {
+        rows.push([r.submittedAt, r.submittedBy, ...qHeaders.map(h => r.answers?.[h] || "")]);
+      });
+      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${form.title.replace(/\s+/g, "_")}_Responses.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function deleteTeamForm(formId) {
+      state.teamForms = state.teamForms.filter(f => f.id !== formId);
+      persistState();
+      renderAdminTeamForms();
+      showToast("Form deleted.", "info");
     }
 
     function renderAnnouncementsGrid() {
@@ -3495,6 +3978,7 @@ async function verify2faCode(e) {
       document.getElementById("edit-team-coach").value = team.coach;
       document.getElementById("edit-team-record").value = team.record;
       document.getElementById("edit-team-email").value = team.email;
+      document.getElementById("edit-team-bio").value = team.bio || "";
 
       const dirSel = document.getElementById("roster-directory-select");
       dirSel.innerHTML = state.studentDirectory.length === 0
@@ -3514,8 +3998,10 @@ async function verify2faCode(e) {
               <button onclick="removeRosterPlayer('${team.id}', ${idx})" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
             </div>
           `).join("");
-    }
 
+      renderAdminTeamForms();
+    }
+    
     function saveTeamDetails(e) {
       e.preventDefault();
       const teamId = document.getElementById("admin-team-selector").value;
@@ -3525,6 +4011,7 @@ async function verify2faCode(e) {
       team.coach = document.getElementById("edit-team-coach").value.trim();
       team.record = document.getElementById("edit-team-record").value.trim();
       team.email = document.getElementById("edit-team-email").value.trim();
+      team.bio = document.getElementById("edit-team-bio").value.trim();
 
       persistState();
       renderPublicPortal();
