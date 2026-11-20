@@ -2417,6 +2417,29 @@
         return;
       }
 
+      // 2. Verify the secret key server-side via Supabase RPC
+      const { data: isSuccess, error: rpcError } = await supabaseClient.rpc('claim_ad_role', {
+        submitted_key: key,
+        ad_name: name
+      });
+
+      if (rpcError || !isSuccess) {
+        showToast("Invalid Department Setup Key or AD already exists.", "error");
+        return;
+      }
+
+      // 2b. Save AD profile into csw_profiles so it loads on every refresh
+      if (data?.user) {
+        await supabaseClient.from("csw_profiles").upsert({
+          id: data.user.id,
+          email,
+          full_name: name,
+          role: "AD",
+          phone,
+          assigned_team_ids: []
+        });
+      }
+      
       // 3. Update local UI state and lock the setup modal
       state.staffUsers = state.staffUsers.filter(u => u.role !== "AD");
       state.staffUsers.unshift({
