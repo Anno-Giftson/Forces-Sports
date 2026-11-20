@@ -2486,6 +2486,34 @@ async function handleStaffStep1(e) {
     return;
   }
 
+  // Fetch the staff profile directly from Supabase so new devices always find it
+  let found = state.staffUsers.find(u => u.email.toLowerCase() === email);
+  if (!found && data?.user) {
+    const { data: profileRow } = await supabaseClient
+      .from("csw_profiles")
+      .select("*")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    if (profileRow && (profileRow.role === "AD" || profileRow.role === "COACH")) {
+      found = {
+        id: profileRow.id,
+        role: profileRow.role,
+        name: profileRow.full_name,
+        email: profileRow.email,
+        phone: profileRow.phone || "",
+        assignedTeamIds: profileRow.assigned_team_ids || (profileRow.team_id ? [profileRow.team_id] : [])
+      };
+      state.staffUsers.push(found);
+      saveLocalCache();
+    }
+  }
+
+  if (!found) {
+    showToast("Auth successful, but staff profile not found in csw_profiles.", "error");
+    return;
+  }
+
   const found = state.staffUsers.find(u => u.email.toLowerCase() === email);
   if (!found) {
     showToast("Auth successful, but staff profile not found.", "error");
