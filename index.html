@@ -2514,12 +2514,6 @@ async function handleStaffStep1(e) {
     return;
   }
 
-  const found = state.staffUsers.find(u => u.email.toLowerCase() === email);
-  if (!found) {
-    showToast("Auth successful, but staff profile not found.", "error");
-    return;
-  }
-
   pending2faUser = found;
   document.getElementById("login-step-1").classList.add("hidden");
   document.getElementById("login-step-2").classList.remove("hidden");
