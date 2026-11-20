@@ -981,6 +981,43 @@
         </form>
       </div>
 
+<!-- Bulk CSV Student Import (Infinite Campus / Schoology) -->
+      <div class="bg-sky-50/70 rounded-2xl border border-sky-200 p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-forces-royal">Infinite Campus / Schoology Export</span>
+            <h3 class="font-display text-xl font-bold text-forces-blue uppercase">Bulk Import Students via CSV</h3>
+            <p class="text-xs text-slate-600 mt-0.5">
+              Upload a CSV containing <span class="font-mono font-semibold">Name</span> (or <span class="font-mono font-semibold">First Name, Last Name</span>), <span class="font-mono font-semibold">Email</span>, and <span class="font-mono font-semibold">Grade</span>.
+            </p>
+          </div>
+          <button type="button" onclick="downloadSampleStudentCsv()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-forces-blue border border-slate-300 text-xs font-bold transition shrink-0">
+            Download Template CSV
+          </button>
+        </div>
+
+        <div class="grid sm:grid-cols-12 gap-3 items-end pt-2">
+          <div class="sm:col-span-5">
+            <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Select CSV File</label>
+            <input type="file" id="bulk-stu-csv-input" accept=".csv,text/csv" class="w-full text-xs text-slate-700 bg-white p-2 rounded-xl border border-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-forces-blue file:text-white hover:file:bg-forces-royal" />
+          </div>
+          <div class="sm:col-span-4">
+            <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Default Initial Password</label>
+            <input type="text" id="bulk-stu-default-pass" value="Forces2026!" minlength="6" placeholder="Minimum 6 characters" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs bg-white font-mono" />
+          </div>
+          <div class="sm:col-span-3">
+            <button type="button" id="btn-run-bulk-csv" onclick="handleBulkStudentCsvImport()" class="w-full px-4 py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-xs transition shadow-sm">
+              Import CSV Roster
+            </button>
+          </div>
+        </div>
+
+        <div id="bulk-csv-progress-box" class="hidden mt-4 p-3 rounded-xl bg-white border border-sky-200 text-xs font-semibold text-forces-blue flex items-center justify-between">
+          <span id="bulk-csv-progress-text">Preparing import...</span>
+          <span id="bulk-csv-progress-count" class="font-mono font-bold">0 / 0</span>
+        </div>
+      </div>
+      
       <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <h3 class="font-display text-lg font-bold text-forces-blue uppercase mb-4">Registered CSW Students</h3>
         <div class="overflow-x-auto">
@@ -3816,6 +3853,169 @@ async function verify2faCode(e) {
       renderPublicPortal();
     }
 
+    function downloadSampleStudentCsv() {
+      const sample = [
+        "First Name,Last Name,Email,Grade",
+        "Jordan,Vance,jvance@charterschool.org,11",
+        "Maya,Lin,mlin@charterschool.org,10"
+      ].join("\n");
+      const blob = new Blob([sample], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "CSW_Student_Import_Template.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function parseCsvLine(line) {
+      const result = [];
+      let current = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === "," && !inQuotes) {
+          result.push(current.trim());
+          current = "";
+        } else {
+          current += ch;
+        }
+      }
+      result.push(current.trim());
+      return result;
+    }
+
+    async function handleBulkStudentCsvImport() {
+      if (!navigator.onLine) {
+        showToast("You are offline. Reconnect before importing students.", "error");
+        return;
+      }
+
+      const fileInput = document.getElementById("bulk-stu-csv-input");
+      const defaultPass = document.getElementById("bulk-stu-default-pass").value.trim();
+      const file = fileInput.files && fileInput.files[0];
+
+      if (!file) {
+        showToast("Please choose a CSV file first.", "error");
+        return;
+      }
+      if (defaultPass.length < 6) {
+        showToast("Default password must be at least 6 characters.", "error");
+        return;
+      }
+
+      const rawText = await file.text();
+      const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) {
+        showToast("CSV file appears to be empty.", "error");
+        return;
+      }
+
+      // Auto-detect headers from Infinite Campus or Schoology exports
+      const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ""));
+      const emailIdx = headers.findIndex(h => h.includes("email") || h.includes("mail"));
+      const fullNameIdx = headers.findIndex(h => h === "name" || h === "fullname" || h === "studentname");
+      const firstIdx = headers.findIndex(h => h.includes("first"));
+      const lastIdx = headers.findIndex(h => h.includes("last"));
+      const gradeIdx = headers.findIndex(h => h.includes("grade") || h === "gr");
+
+      if (emailIdx === -1 || (fullNameIdx === -1 && (firstIdx === -1 || lastIdx === -1))) {
+        showToast("CSV must include an Email column and Name (or First Name & Last Name) columns.", "error");
+        return;
+      }
+
+      const candidates = [];
+      const existingEmails = new Set(state.studentDirectory.map(s => s.email.toLowerCase()));
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCsvLine(lines[i]);
+        const email = (cols[emailIdx] || "").trim().toLowerCase();
+        if (!email || !email.includes("@") || existingEmails.has(email)) continue;
+
+        let name = "";
+        if (fullNameIdx !== -1 && cols[fullNameIdx]) {
+          name = cols[fullNameIdx].trim();
+        } else {
+          const first = (cols[firstIdx] || "").trim();
+          const last = (cols[lastIdx] || "").trim();
+          name = `${first} ${last}`.trim();
+        }
+        if (!name) continue;
+
+        const rawGrade = gradeIdx !== -1 ? (cols[gradeIdx] || "").replace(/[^0-9]/g, "") : "9";
+        const grade = ["9", "10", "11", "12"].includes(rawGrade) ? rawGrade : "9";
+
+        existingEmails.add(email);
+        candidates.push({ name, email, grade });
+      }
+
+      if (candidates.length === 0) {
+        showToast("No new student records found (all emails may already be registered).", "info");
+        return;
+      }
+
+      const btn = document.getElementById("btn-run-bulk-csv");
+      const progressBox = document.getElementById("bulk-csv-progress-box");
+      const progressText = document.getElementById("bulk-csv-progress-text");
+      const progressCount = document.getElementById("bulk-csv-progress-count");
+
+      btn.disabled = true;
+      btn.classList.add("opacity-60", "cursor-not-allowed");
+      progressBox.classList.remove("hidden");
+
+      let importedCount = 0;
+      let failedCount = 0;
+      const tempAuthClient = createIsolatedAuthClient();
+
+      for (let i = 0; i < candidates.length; i++) {
+        const stu = candidates[i];
+        progressText.textContent = `Provisioning ${stu.name}...`;
+        progressCount.textContent = `${i + 1} / ${candidates.length}`;
+
+        const { error } = await tempAuthClient.auth.signUp({
+          email: stu.email,
+          password: defaultPass
+        });
+
+        if (error && !error.message.toLowerCase().includes("already registered")) {
+          failedCount++;
+          continue;
+        }
+
+        await supabaseClient.from("csw_password_vault").upsert({
+          target_email: stu.email,
+          account_type: "STUDENT",
+          display_name: stu.name,
+          current_password: defaultPass,
+          updated_at: new Date().toISOString()
+        });
+
+        state.studentDirectory.push({
+          id: `stu-${Date.now()}-${i}`,
+          name: stu.name,
+          email: stu.email,
+          grade: stu.grade
+        });
+        importedCount++;
+      }
+
+      persistState();
+      renderStudentDirectoryTable();
+      loadAdminTeamEditor();
+
+      btn.disabled = false;
+      btn.classList.remove("opacity-60", "cursor-not-allowed");
+      fileInput.value = "";
+      progressText.textContent = `Import finished: ${importedCount} added${failedCount ? `, ${failedCount} skipped` : ""}.`;
+      showToast(`Imported ${importedCount} student(s) into directory!`, "success");
+    }
     
     function renderStudentDirectoryTable() {
 
