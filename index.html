@@ -1768,38 +1768,6 @@
       </form>
     </div>
   </div>
-
-  <!-- 13. AD Re-Authentication Modal to View Passwords -->
-  <div id="ad-verify-pass-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
-      <div class="flex items-center justify-between mb-3">
-        <div>
-          <span class="text-xs font-bold uppercase tracking-wider text-amber-600">AD Security Check</span>
-          <h3 class="font-display text-2xl font-bold text-forces-blue uppercase">Verify Your Identity</h3>
-        </div>
-        <button onclick="closeModal('ad-verify-pass-modal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
-      </div>
-      <p id="verify-ad-target-desc" class="text-xs text-slate-600 mb-4"></p>
-
-      <form id="verify-ad-pass-form" onsubmit="verifyAdAndRevealPassword(event)" class="space-y-3">
-        <input type="hidden" id="target-vault-email" />
-        <input type="hidden" id="target-vault-type" />
-        <div>
-          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Re-Enter Your AD Password</label>
-          <input type="password" id="ad-reauth-password-input" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
-        </div>
-        <button type="submit" class="w-full py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-sm transition">
-          Confirm &amp; Reveal Password
-        </button>
-      </form>
-
-      <div id="revealed-vault-pass-box" class="hidden mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center space-y-1">
-        <div class="text-[11px] font-bold uppercase text-emerald-800">Current Portal Password</div>
-        <div id="revealed-vault-pass-value" class="font-mono text-lg font-extrabold text-slate-900 select-all"></div>
-        <div class="text-[11px] text-emerald-700">Close this window when finished.</div>
-      </div>
-    </div>
-  </div>
   
   <!-- ========================================================= -->
   <!-- APPLICATION LOGIC & SUPABASE / APPS SCRIPT SYNC           -->
@@ -2063,6 +2031,8 @@
         const cfg = state.supabaseConfig || SUPABASE_DEFAULT;
         if (!window.supabase || !cfg.url || !cfg.anonKey) return;
         supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+
+        // 1. Fetch shared settings & non-normalized state from csw_forces_state
         const { data, error } = await supabaseClient
           .from(cfg.tableName || "csw_forces_state")
           .select("payload")
@@ -2078,15 +2048,12 @@
           }
           const localUpdated = state.lastUpdated || 0;
           const remoteUpdated = data.payload.lastUpdated || 0;
-          
+
           if (localUpdated > remoteUpdated) {
-            // Local memory is newer than the cloud (likely because a previous cloud save failed).
             console.warn("Local state is newer than cloud. Pushing local to cloud instead of overriding.");
             await pushStateToSupabase();
           } else {
             applyLoadedPayload(data.payload, true);
-            saveLocalCache();
-            renderAll();
             setCloudStatus("Cloud Synced", true);
           }
         } else if (!error && !data) {
@@ -2096,6 +2063,72 @@
           setCloudStatus("Local Save Only", false);
         }
 
+        // 2. Fetch normalized profiles, games, and chat messages
+        const [profRes, gamesRes, chatRes] = await Promise.all([
+          supabaseClient.from("csw_profiles").select("*"),
+          supabaseClient.from("csw_games").select("*").order("game_date", { ascending: true }),
+          supabaseClient.from("csw_chat_messages").select("*").order("created_at", { ascending: true }).limit(500)
+        ]);
+
+        if (!profRes.error && profRes.data) {
+          state.staffUsers = profRes.data
+            .filter(p => p.role === "AD" || p.role === "COACH")
+            .map(p => ({
+              id: p.id,
+              role: p.role,
+              name: p.full_name,
+              email: p.email,
+              phone: p.phone || "",
+              assignedTeamIds: p.assigned_team_ids || (p.team_id ? [p.team_id] : [])
+            }));
+
+          state.studentDirectory = profRes.data
+            .filter(p => p.role === "STUDENT")
+            .map(p => ({
+              id: p.id,
+              name: p.full_name,
+              email: p.email,
+              grade: p.grade || "9"
+            }));
+        }
+
+        if (!gamesRes.error && gamesRes.data) {
+          state.games = gamesRes.data.map(g => ({
+            id: g.id,
+            teamId: g.team_id,
+            opponent: g.opponent,
+            date: g.game_date ? g.game_date.split("T")[0] : "",
+            time: g.game_time || "",
+            homeAway: g.home_away || "Home",
+            location: g.location || "",
+            status: g.status || "Upcoming",
+            cswScore: g.score_us,
+            oppScore: g.score_them,
+            busTime: g.bus_time || "",
+            busNum: g.bus_num || ""
+          }));
+        }
+
+        if (!chatRes.error && chatRes.data) {
+          state.chatMessages = chatRes.data.map(m => {
+            const dt = new Date(m.created_at);
+            return {
+              id: m.id,
+              channelId: m.channel_id || `team:${m.team_id}`,
+              senderName: m.sender_name,
+              senderEmail: m.sender_email || "",
+              senderRole: m.sender_role || "STUDENT",
+              text: m.message,
+              timestamp: dt.getTime(),
+              timeLabel: dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            };
+          });
+        }
+
+        saveLocalCache();
+        renderAll();
+
+        // 3. Subscribe to Realtime updates
         try {
           supabaseClient
             .channel("csw-forces-realtime")
@@ -2103,7 +2136,6 @@
               if (change.new && change.new.payload) {
                 const localUpdated = state.lastUpdated || 0;
                 const remoteUpdated = change.new.payload.lastUpdated || 0;
-                // Only merge incoming cloud changes if they are genuinely newer than our local actions
                 if (remoteUpdated > localUpdated) {
                   applyLoadedPayload(change.new.payload, true);
                   saveLocalCache();
@@ -2130,18 +2162,14 @@
         const payloadToSave = {
           lastUpdated: state.lastUpdated,
           teams: state.teams,
-          games: state.games,
           practices: state.practices,
           excusals: state.excusals,
           announcements: state.announcements,
-          staffUsers: (state.staffUsers || []).map(({ password, tempPassword, twoFactorSecret, ...safeStaff }) => safeStaff),
-          studentDirectory: (state.studentDirectory || []).map(({ password, ...safeStudent }) => safeStudent),
           alertSubscribers: state.alertSubscribers,
           teacherMailingList: state.teacherMailingList,
           urgentAlert: state.urgentAlert,
           teamChatPermissions: state.teamChatPermissions,
           chatGroups: state.chatGroups,
-          chatMessages: state.chatMessages.slice(-500),
           teamPhotos: state.teamPhotos,
           teamForms: state.teamForms,
           webhookConfig: state.webhookConfig,
@@ -3623,33 +3651,57 @@ async function verify2faCode(e) {
       }
     }
 
-    function sendChatMessage(e) {
+    async function sendChatMessage(e) {
       e.preventDefault();
       if (!currentSession || !activeChatChannelId) return;
       const input = document.getElementById("chat-message-input");
       const text = input.value.trim();
       if (!text) return;
 
-      const now = new Date();
-      const timeLabel = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const teamId = activeChatChannelId.startsWith("team:")
+        ? activeChatChannelId.replace("team:", "")
+        : activeChatChannelId;
 
+      const { data: authData } = await supabaseClient.auth.getUser();
+      const senderUuid = authData?.user?.id || currentSession.id;
+
+      const { data, error } = await supabaseClient
+        .from("csw_chat_messages")
+        .insert({
+          team_id: teamId,
+          channel_id: activeChatChannelId,
+          sender_id: senderUuid,
+          sender_name: currentSession.name,
+          sender_email: currentSession.email,
+          sender_role: currentSession.role,
+          message: text
+        })
+        .select()
+        .single();
+
+      if (error) {
+        showToast("Message blocked or failed: " + error.message, "error");
+        return;
+      }
+
+      const now = new Date(data.created_at);
       state.chatMessages.push({
-        id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        id: data.id,
         channelId: activeChatChannelId,
         senderName: currentSession.name,
         senderEmail: currentSession.email,
         senderRole: currentSession.role,
         text,
         timestamp: now.getTime(),
-        timeLabel
+        timeLabel: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       });
 
       input.value = "";
       markChannelAsRead(activeChatChannelId);
-      persistState();
+      saveLocalCache();
       renderActiveChatChannel();
     }
-
+    
     function deleteChatMessage(msgId) {
       state.chatMessages = state.chatMessages.filter(m => m.id !== msgId);
       persistState();
@@ -3937,8 +3989,29 @@ async function verify2faCode(e) {
       const busTime = document.getElementById("new-game-bus-time").value.trim();
       const busNum = document.getElementById("new-game-bus-num").value.trim();
 
-      const newGame = {
-        id: `g-${Date.now()}`,
+      const { data, error } = await supabaseClient
+        .from("csw_games")
+        .insert({
+          team_id: teamId,
+          opponent,
+          game_date: `${date}T12:00:00Z`,
+          game_time: time,
+          home_away: homeAway,
+          location,
+          status: "Upcoming",
+          bus_time: busTime,
+          bus_num: busNum
+        })
+        .select()
+        .single();
+
+      if (error) {
+        showToast("Could not add game: " + error.message, "error");
+        return;
+      }
+
+      state.games.unshift({
+        id: data.id,
         teamId,
         opponent,
         date,
@@ -3950,9 +4023,9 @@ async function verify2faCode(e) {
         oppScore: null,
         busTime,
         busNum
-      };
-      state.games.unshift(newGame);
-      persistState();
+      });
+
+      saveLocalCache();
       renderAdminGamesTable();
       renderPublicPortal();
       e.target.reset();
@@ -4006,7 +4079,7 @@ async function verify2faCode(e) {
       }).join("");
     }
 
-    function saveGameScore(gameId) {
+    async function saveGameScore(gameId) {
       const game = state.games.find(g => g.id === gameId);
       if (!game) return;
       const prevStatus = game.status;
@@ -4014,11 +4087,23 @@ async function verify2faCode(e) {
       const cswVal = document.getElementById(`game-csw-${gameId}`).value;
       const oppVal = document.getElementById(`game-opp-${gameId}`).value;
 
-      game.status = newStatus;
-      game.cswScore = cswVal === "" ? null : Number(cswVal);
-      game.oppScore = oppVal === "" ? null : Number(oppVal);
+      const scoreUs = cswVal === "" ? null : Number(cswVal);
+      const scoreThem = oppVal === "" ? null : Number(oppVal);
 
-      persistState();
+      const { error } = await supabaseClient
+        .from("csw_games")
+        .update({ status: newStatus, score_us: scoreUs, score_them: scoreThem })
+        .eq("id", gameId);
+
+      if (error) {
+        showToast("Failed to save score: " + error.message, "error");
+        return;
+      }
+
+      game.status = newStatus;
+      game.cswScore = scoreUs;
+      game.oppScore = scoreThem;
+      saveLocalCache();
       renderPublicPortal();
       showToast("Contest updated!", "success");
 
@@ -4032,14 +4117,19 @@ async function verify2faCode(e) {
       }
     }
 
-    function deleteGame(gameId) {
+    async function deleteGame(gameId) {
+      const { error } = await supabaseClient.from("csw_games").delete().eq("id", gameId);
+      if (error) {
+        showToast("Could not delete contest: " + error.message, "error");
+        return;
+      }
       state.games = state.games.filter(g => g.id !== gameId);
-      persistState();
+      saveLocalCache();
       renderAdminGamesTable();
       renderPublicPortal();
       showToast("Contest removed.", "info");
     }
-
+    
     function addPracticeSession(e) {
       e.preventDefault();
       const teamId = document.getElementById("prac-team-select").value;
@@ -4540,20 +4630,26 @@ const coachesListEl = document.getElementById("admin-program-coaches-list");
       }
 
       const tempAuthClient = createIsolatedAuthClient();
-      const { error } = await tempAuthClient.auth.signUp({ email, password });
+      const { data, error } = await tempAuthClient.auth.signUp({
+        email: email,
+        password: password
+      });
+
       if (error) {
-        showToast("Student registration failed: " + error.message, "error");
+        showToast("Supabase Auth error: " + error.message, "error");
         return;
       }
 
-      await supabaseClient.from("csw_password_vault").upsert({
-        target_email: email,
-        account_type: "STUDENT",
-        display_name: name,
-        current_password: password,
-        updated_at: new Date().toISOString()
-      });
-
+      // Save the student's profile into csw_profiles
+      if (data?.user) {
+        await supabaseClient.from("csw_profiles").insert({
+          id: data.user.id,
+          email: email,
+          full_name: name,
+          role: "STUDENT",
+          grade: grade
+        });
+      }
       state.studentDirectory.push({
         id: `stu-${Date.now()}`,
         name,
@@ -4708,23 +4804,25 @@ const coachesListEl = document.getElementById("admin-program-coaches-list");
         progressText.textContent = `Provisioning ${stu.name}...`;
         progressCount.textContent = `${i + 1} / ${candidates.length}`;
 
-        const { error } = await tempAuthClient.auth.signUp({
-          email: stu.email,
-          password: defaultPass
+        const { data, error } = await tempAuthClient.auth.signUp({
+        email: stu.email,
+        password: defaultPass
         });
+
+if (!error && data?.user) {
+  await supabaseClient.from("csw_profiles").insert({
+    id: data.user.id,
+    email: stu.email,
+    full_name: stu.name,
+    role: "STUDENT",
+    grade: stu.grade || "9"
+  });
+}
 
         if (error && !error.message.toLowerCase().includes("already registered")) {
           failedCount++;
           continue;
         }
-
-        await supabaseClient.from("csw_password_vault").upsert({
-          target_email: stu.email,
-          account_type: "STUDENT",
-          display_name: stu.name,
-          current_password: defaultPass,
-          updated_at: new Date().toISOString()
-        });
 
         state.studentDirectory.push({
           id: `stu-${Date.now()}-${i}`,
@@ -4782,7 +4880,7 @@ return `
 
 <td class="py-3 px-4 text-right whitespace-nowrap space-x-3">
 
-<button onclick="openAdVaultVerifyModal('${escapeHtml(s.email)}', '${escapeHtml(s.name)}', 'STUDENT')" class="text-xs font-bold text-forces-royal hover:underline">View Password</button>
+<button onclick="sendResetEmailById('${s.id}', 'STUDENT')" class="text-xs font-bold text-forces-royal hover:underline">Send Password Reset</button>
 
 <button onclick="deleteStudentFromDirectory('${s.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
 
@@ -4860,7 +4958,7 @@ return `
             </td>
             <td class="py-3 px-4 text-xs text-slate-700 max-w-xs">${escapeHtml(sportNames)}</td>
             <td class="py-3 px-4 text-right whitespace-nowrap space-x-2">
-           ${currentSession.id === "ad-primary" && u.id !== currentSession.id ? `<button onclick="openAdVaultVerifyModal('${escapeHtml(u.email)}', '${escapeHtml(u.name)}', 'STAFF')" class="text-xs font-bold text-amber-700 hover:underline">View Password</button>` : ""}
+           ${currentSession.id === "ad-primary" && u.id !== currentSession.id ? `<button onclick="sendResetEmailById('${u.id}', 'STAFF')" class="text-xs font-bold text-amber-700 hover:underline">Send Password Reset</button>` : ""}
            <button onclick="openEditStaffModal('${u.id}')" class="text-xs font-bold text-forces-royal hover:underline">Edit Info</button>
            ${u.id !== currentSession.id ? `<button onclick="deleteStaffUser('${u.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>` : ""}
          </td>
@@ -4905,19 +5003,29 @@ return `
         email: email,
         password: password
       });
+
+      if (error) {
+        showToast("Supabase Auth error: " + error.message, "error");
+        return;
+      }
+
+      // Save the coach/AD profile into csw_profiles
+      if (data?.user) {
+        await supabaseClient.from("csw_profiles").insert({
+          id: data.user.id,
+          email: email,
+          full_name: name,
+          role: role,
+          phone: phone,
+          team_id: assignedTeamIds[0] || null,
+          assigned_team_ids: assignedTeamIds
+        });
+      }
       
       if (error) {
         showToast("Provisioning failed: " + error.message, "error");
         return;
       }
-
-    await supabaseClient.from("csw_password_vault").upsert({
-        target_email: email,
-        account_type: "STAFF",
-        display_name: name,
-        current_password: password,
-        updated_at: new Date().toISOString()
-      });
       
       state.staffUsers.push({
         id: `staff-${Date.now()}`,
@@ -5079,14 +5187,6 @@ function syncStaffCoachToTeam(teamId, name, email, title = "Head Coach") {
         return;
       }
 
-      await supabaseClient.from("csw_password_vault").upsert({
-        target_email: currentSession.email.toLowerCase(),
-        account_type: "STUDENT",
-        display_name: currentSession.name,
-        current_password: newPassword,
-        updated_at: new Date().toISOString()
-      });
-
       const adEmails = state.staffUsers.filter(u => u.role === "AD").map(u => u.email);
       if (adEmails.length > 0) {
         callAppsScriptBridge("schedule_alert", {
@@ -5111,73 +5211,32 @@ function syncStaffCoachToTeam(teamId, name, email, title = "Head Coach") {
         return;
       }
 
-      await supabaseClient.from("csw_password_vault").upsert({
-        target_email: currentSession.email.toLowerCase(),
-        account_type: "STAFF",
-        display_name: currentSession.name,
-        current_password: newPassword,
-        updated_at: new Date().toISOString()
-      });
-
       e.target.reset();
       showToast("Your staff password has been updated!", "success");
     }
 
-    function openAdVaultVerifyModal(targetEmail, targetName, accountType) {
-      if (!currentSession || currentSession.role !== "AD") return;
-      if (accountType === "STAFF" && currentSession.id !== "ad-primary") {
-        showToast("Only the Main Athletic Director can view staff passwords.", "error");
-        return;
-      }
+    async function sendResetEmailById(userId, accountType) {
+  if (!currentSession || currentSession.role !== "AD") return;
 
-      document.getElementById("target-vault-email").value = targetEmail.toLowerCase();
-      document.getElementById("target-vault-type").value = accountType;
-      document.getElementById("verify-ad-target-desc").textContent =
-        `Re-enter your Athletic Director password to view the current password for ${targetName} (${targetEmail}).`;
-      document.getElementById("ad-reauth-password-input").value = "";
-      document.getElementById("revealed-vault-pass-box").classList.add("hidden");
-      document.getElementById("verify-ad-pass-form").classList.remove("hidden");
-      document.getElementById("ad-verify-pass-modal").classList.remove("hidden");
-    }
+  const user = accountType === "STUDENT"
+    ? state.studentDirectory.find(s => s.id === userId)
+    : state.staffUsers.find(u => u.id === userId);
 
-    async function verifyAdAndRevealPassword(e) {
-      e.preventDefault();
-      if (!currentSession || currentSession.role !== "AD") return;
-      const adPassword = document.getElementById("ad-reauth-password-input").value;
-      const targetEmail = document.getElementById("target-vault-email").value;
-      const accountType = document.getElementById("target-vault-type").value;
+  if (!user || !user.email) {
+    showToast("User email not found.", "error");
+    return;
+  }
 
-      if (accountType === "STAFF" && currentSession.id !== "ad-primary") {
-        showToast("Access denied.", "error");
-        return;
-      }
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(user.email, {
+    redirectTo: window.location.origin
+  });
 
-      const verifyClient = createIsolatedAuthClient();
-      const { error: authErr } = await verifyClient.auth.signInWithPassword({
-        email: currentSession.email,
-        password: adPassword
-      });
-
-      if (authErr) {
-        showToast("Incorrect AD password. Access denied.", "error");
-        return;
-      }
-
-      const { data, error } = await supabaseClient
-        .from("csw_password_vault")
-        .select("current_password")
-        .eq("target_email", targetEmail)
-        .maybeSingle();
-
-      if (error || !data) {
-        showToast("No saved password found in vault for this user.", "error");
-        return;
-      }
-
-      document.getElementById("verify-ad-pass-form").classList.add("hidden");
-      document.getElementById("revealed-vault-pass-value").textContent = data.current_password;
-      document.getElementById("revealed-vault-pass-box").classList.remove("hidden");
-    }
+  if (error) {
+    showToast("Could not send reset email: " + error.message, "error");
+  } else {
+    showToast(`Password reset link sent to ${user.email}!`, "success");
+  }
+}
     
     function deleteStaffUser(userId) {
       state.staffUsers = state.staffUsers.filter(u => u.id !== userId);
