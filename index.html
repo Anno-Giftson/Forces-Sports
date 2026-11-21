@@ -1380,6 +1380,10 @@
             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Attach Photo or Video (Optional)</label>
             <input type="file" id="news-media-file" accept="image/*,video/*" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-50 file:text-forces-blue" />
           </div>
+          <label class="flex items-center gap-2.5 p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-bold text-red-800 cursor-pointer">
+            <input type="checkbox" id="news-urgent" class="w-4 h-4 rounded text-red-600 border-red-300" />
+            <span>Urgent Announcement (Pop up automatically on screen when visitors open the site)</span>
+          </label>
           <div class="flex justify-end">
             <button type="submit" class="px-5 py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-sm transition">
               Publish to Portal
@@ -1860,6 +1864,30 @@
           Open Direct Chat
         </button>
       </form>
+    </div>
+  </div>
+<!-- 13. Urgent Announcement Pop-up Modal -->
+  <div id="urgent-announcement-modal" class="hidden fixed inset-0 z-[90] bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border-2 border-red-600">
+      <div class="bg-red-600 px-5 py-3.5 flex items-center justify-between text-white">
+        <div class="flex items-center gap-2 font-display text-lg font-bold uppercase tracking-wide">
+          <span>⚠️ Urgent Athletics Alert</span>
+        </div>
+        <button onclick="dismissUrgentAnnouncementModal()" aria-label="Close" class="text-white/80 hover:text-white text-xl font-bold leading-none">✕</button>
+      </div>
+      <div class="p-6 space-y-3">
+        <div class="flex items-center justify-between text-xs">
+          <span id="urgent-ann-modal-tag" class="px-2.5 py-0.5 rounded bg-red-100 text-red-800 font-bold uppercase"></span>
+          <span id="urgent-ann-modal-date" class="text-slate-400 font-semibold"></span>
+        </div>
+        <h3 id="urgent-ann-modal-title" class="font-display text-2xl font-bold text-slate-900 uppercase leading-snug"></h3>
+        <p id="urgent-ann-modal-body" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line"></p>
+      </div>
+      <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex justify-end">
+        <button onclick="dismissUrgentAnnouncementModal()" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm transition">
+          Got It
+        </button>
+      </div>
     </div>
   </div>
   
