@@ -1576,10 +1576,14 @@
       </form>
 
       <!-- Step 2: Email OTP 2FA Verification -->
+      <!-- Step 2: Email OTP 2FA Verification -->
       <div id="login-step-2" class="hidden space-y-4">
-        <div class="p-3.5 rounded-xl bg-sky-50 border border-sky-200 text-xs text-slate-700 space-y-1">
+        <div class="p-3.5 rounded-xl bg-sky-50 border border-sky-200 text-xs text-slate-700 space-y-1.5">
           <div class="font-bold text-forces-blue">Email One-Time Passcode (OTP)</div>
-          <p id="twofa-target-desc">We sent a 6-digit verification code to your CSW staff email. Check your inbox (and spam folder) and enter the code below.</p>
+          <p id="twofa-target-desc">We sent a 6-digit verification code to your CSW staff email.</p>
+          <div class="p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-900">
+            <strong>Don't see it?</strong> Check your <strong>Spam</strong> or <strong>Junk</strong> folder—automated school portal emails often land there first.
+          </div>
         </div>
 
         <form onsubmit="verify2faCode(event)" class="space-y-3 pt-1">
