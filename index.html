@@ -3030,9 +3030,34 @@
         state.teams.map(t => `<option value="${t.id}">${escapeHtml(t.name)} (${t.season})</option>`).join("");
       if ([...teamFilter.options].some(o => o.value === prevTeamVal)) teamFilter.value = prevTeamVal;
 
-      renderPublicSchedule();
+    renderPublicSchedule();
       renderTeamsGrid();
       renderAnnouncementsGrid();
+      checkUrgentAnnouncementPopup();
+    }
+
+    let activeUrgentAnnId = null;
+
+    function checkUrgentAnnouncementPopup() {
+      const urgentAnn = (state.announcements || []).find(a => a.urgent === true);
+      if (!urgentAnn) return;
+
+      const annId = String(urgentAnn.id);
+      if (sessionStorage.getItem("dismissed_urgent_ann_id") === annId) return;
+
+      activeUrgentAnnId = annId;
+      document.getElementById("urgent-ann-modal-tag").textContent = urgentAnn.tag || "Urgent";
+      document.getElementById("urgent-ann-modal-date").textContent = urgentAnn.date || "";
+      document.getElementById("urgent-ann-modal-title").textContent = urgentAnn.title || "";
+      document.getElementById("urgent-ann-modal-body").textContent = urgentAnn.body || "";
+      document.getElementById("urgent-announcement-modal").classList.remove("hidden");
+    }
+
+    function dismissUrgentAnnouncementModal() {
+      if (activeUrgentAnnId) {
+        sessionStorage.setItem("dismissed_urgent_ann_id", activeUrgentAnnId);
+      }
+      document.getElementById("urgent-announcement-modal").classList.add("hidden");
     }
 
     function renderPublicSchedule() {
@@ -6002,6 +6027,7 @@ return `
       const title = document.getElementById("news-title").value.trim();
       const tag = document.getElementById("news-tag").value;
       const body = document.getElementById("news-body").value.trim();
+      const urgent = document.getElementById("news-urgent")?.checked || false;
       const fileInput = document.getElementById("news-media-file");
       const file = fileInput && fileInput.files && fileInput.files[0];
       const date = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
@@ -6022,14 +6048,14 @@ return `
         mediaType = isVideo ? "video" : "image";
       }
 
-      state.announcements.unshift({ id: `n-${Date.now()}`, title, tag, date, body, mediaUrl, mediaType });
+      state.announcements.unshift({ id: `n-${Date.now()}`, title, tag, date, body, urgent, mediaUrl, mediaType });
       persistState();
       renderAdminNews();
       renderPublicPortal();
       e.target.reset();
-      showToast("Announcement published!", "success");
+      showToast(urgent ? "Urgent announcement published with site pop-up!" : "Announcement published!", "success");
     }
-
+    
     function deleteAnnouncement(id) {
       state.announcements = state.announcements.filter(a => a.id !== id);
       persistState();
