@@ -1083,6 +1083,13 @@
        </div>
 
        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between">
+              <span id="form-builder-heading" class="text-xs font-extrabold uppercase tracking-wider text-forces-blue">Create New Team Form</span>
+              <button type="button" id="btn-cancel-edit-form" onclick="cancelEditTeamForm()" class="hidden px-3 py-1 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100">
+                Cancel Editing
+              </button>
+            </div>
+            <input type="hidden" id="edit-form-id" value="" />
             <div class="grid sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Form Title</label>
@@ -1108,7 +1115,7 @@
               <button type="button" onclick="addVisualFormQuestion()" class="px-4 py-2 rounded-xl bg-white hover:bg-sky-50 text-forces-blue border border-sky-300 font-bold text-xs transition shadow-sm">
                 + Add Question
               </button>
-              <button type="button" onclick="publishVisualTeamForm()" class="px-5 py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-xs transition shadow-sm">
+              <button type="button" id="btn-publish-team-form" onclick="publishVisualTeamForm()" class="px-5 py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-xs transition shadow-sm">
                 Publish Form to Sport Page
               </button>
             </div>
@@ -1353,10 +1360,18 @@
 
     <!-- TAB G: Department Announcements (AD Only) -->
     <div id="admin-panel-news" class="hidden space-y-6">
+      <!-- TAB G: Department Announcements (AD Only) -->
+    <div id="admin-panel-news" class="hidden space-y-6">
       <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <h2 class="font-display text-xl font-bold text-forces-blue uppercase mb-4">Publish Department Announcement</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="news-form-heading" class="font-display text-xl font-bold text-forces-blue uppercase">Publish Department Announcement</h2>
+          <button type="button" id="btn-cancel-edit-news" onclick="cancelEditAnnouncement()" class="hidden px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700">
+            Cancel Edit
+          </button>
+        </div>
         <form onsubmit="publishAnnouncement(event)" class="space-y-4">
-          <div class="grid sm:grid-cols-2 gap-4">
+          <input type="hidden" id="news-edit-id" value="" />
+          <div class="grid sm:grid-cols-3 gap-4">
             <div>
               <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Headline</label>
               <input type="text" id="news-title" required placeholder="e.g., Spring Sports DIAA Physical Deadline" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm" />
@@ -1371,10 +1386,18 @@
                 <option value="Championships">Championships</option>
               </select>
             </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Card Size on Portal</label>
+              <select id="news-card-size" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white">
+                <option value="standard" selected>Standard (1 Column)</option>
+                <option value="wide">Wide (2 Columns)</option>
+                <option value="full">Full Width (Banner Card)</option>
+              </select>
+            </div>
           </div>
           <div>
             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Announcement Details</label>
-            <textarea id="news-body" rows="3" required placeholder="Write the full announcement for CSW student-athletes and families..." class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm"></textarea>
+            <textarea id="news-body" rows="4" required placeholder="Write the full announcement for CSW student-athletes and families..." class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm"></textarea>
           </div>
           <div>
             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Attach Photo or Video (Optional)</label>
@@ -1385,7 +1408,7 @@
             <span>Urgent Announcement (Pop up automatically on screen when visitors open the site)</span>
           </label>
           <div class="flex justify-end">
-            <button type="submit" class="px-5 py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-sm transition">
+            <button type="submit" id="btn-submit-news" class="px-5 py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-sm transition">
               Publish to Portal
             </button>
           </div>
@@ -1888,6 +1911,50 @@
           Got It
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- 13. Urgent Announcement Pop-up Modal -->
+  <div id="urgent-announcement-modal" class="hidden fixed inset-0 z-[90] bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border-2 border-red-600">
+      <div class="bg-red-600 px-5 py-3.5 flex items-center justify-between text-white">
+        <div class="flex items-center gap-2 font-display text-lg font-bold uppercase tracking-wide">
+          <span>⚠️ Urgent Athletics Alert</span>
+        </div>
+        <button onclick="dismissUrgentAnnouncementModal()" aria-label="Close" class="text-white/80 hover:text-white text-xl font-bold leading-none">✕</button>
+      </div>
+      <div class="p-6 space-y-3">
+        <div class="flex items-center justify-between text-xs">
+          <span id="urgent-ann-modal-tag" class="px-2.5 py-0.5 rounded bg-red-100 text-red-800 font-bold uppercase"></span>
+          <span id="urgent-ann-modal-date" class="text-slate-400 font-semibold"></span>
+        </div>
+        <h3 id="urgent-ann-modal-title" class="font-display text-2xl font-bold text-slate-900 uppercase leading-snug"></h3>
+        <p id="urgent-ann-modal-body" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line break-words"></p>
+      </div>
+      <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex justify-end">
+        <button onclick="dismissUrgentAnnouncementModal()" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm transition">
+          Got It
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14. In-Site Form Results Viewer Modal (Coaches & ADs) -->
+  <div id="form-results-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-forces-royal">Form Submissions</span>
+          <h3 id="form-results-modal-title" class="font-display text-2xl font-bold text-forces-blue uppercase">Form Responses</h3>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="form-results-export-btn" type="button" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
+            Export CSV
+          </button>
+          <button onclick="closeModal('form-results-modal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
+        </div>
+      </div>
+      <div id="form-results-modal-body" class="py-4 overflow-auto flex-1 space-y-4"></div>
     </div>
   </div>
   
@@ -2542,6 +2609,10 @@
         mobStudent.classList.add("hidden");
       }
       updateUnreadChatBadges();
+      if (activeSportPageId) {
+        const activeTeam = state.teams.find(t => t.id === activeSportPageId);
+        if (activeTeam) renderSportPageContent(activeTeam);
+      }
     }
 
     function switchMainView(view) {
@@ -3219,6 +3290,10 @@
       document.getElementById("sport-fact-season").textContent = team.season;
       document.getElementById("sport-fact-roster").textContent = `${roster.length} Student-Athletes`;
       document.getElementById("sport-fact-forms").textContent = `${forms.length} Available`;
+      const formsTabBtn = document.getElementById("sport-subtab-forms");
+      if (formsTabBtn) {
+        formsTabBtn.textContent = forms.length > 0 ? `Team Forms (${forms.length})` : "Team Forms";
+      }
 
   const coaches = getProgramCoachesList(team);
     document.getElementById("sport-coaches-list").innerHTML = coaches.length === 0
@@ -3642,8 +3717,42 @@
       }).join("");
     }
 
+    function startEditTeamForm(formId) {
+      const form = (state.teamForms || []).find(f => f.id === formId);
+      if (!form) return;
+      document.getElementById("edit-form-id").value = form.id;
+      document.getElementById("new-form-title").value = form.title || "";
+      document.getElementById("new-form-audience").value = form.audience || "PUBLIC";
+      document.getElementById("new-form-desc").value = form.description || "";
+      document.getElementById("form-builder-heading").textContent = `Editing Form: ${form.title}`;
+      document.getElementById("btn-publish-team-form").textContent = "Save Form Changes";
+      document.getElementById("btn-cancel-edit-form").classList.remove("hidden");
+
+      draftFormQuestions = (form.questions || []).map((q, idx) => ({
+        id: `q-edit-${idx}-${Date.now()}`,
+        label: typeof q === "string" ? q : q.label,
+        type: typeof q === "string" ? "short_text" : (q.type || "short_text"),
+        options: Array.isArray(q.options) && q.options.length ? [...q.options] : ["Option 1", "Option 2"],
+        required: typeof q === "string" ? true : !!q.required
+      }));
+      renderVisualFormBuilder();
+      document.getElementById("visual-form-questions-builder").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function cancelEditTeamForm() {
+      document.getElementById("edit-form-id").value = "";
+      document.getElementById("new-form-title").value = "";
+      document.getElementById("new-form-desc").value = "";
+      document.getElementById("new-form-audience").value = "PUBLIC";
+      document.getElementById("form-builder-heading").textContent = "Create New Team Form";
+      document.getElementById("btn-publish-team-form").textContent = "Publish Form to Sport Page";
+      document.getElementById("btn-cancel-edit-form").classList.add("hidden");
+      resetVisualFormBuilder();
+    }
+
     function publishVisualTeamForm() {
       const teamId = document.getElementById("admin-team-selector").value;
+      const editFormId = document.getElementById("edit-form-id")?.value || "";
       const title = document.getElementById("new-form-title").value.trim();
       const audience = document.getElementById("new-form-audience").value;
       const description = document.getElementById("new-form-desc").value.trim();
@@ -3652,6 +3761,118 @@
         showToast("Please enter a Form Title.", "error");
         return;
       }
+
+      const validQuestions = draftFormQuestions
+        .filter(q => q.label.trim().length > 0)
+        .map(q => ({
+          label: q.label.trim(),
+          type: q.type,
+          options: (q.options || []).map(o => o.trim()).filter(Boolean),
+          required: !!q.required
+        }));
+
+      if (validQuestions.length === 0) {
+        showToast("Please add at least one question with text.", "error");
+        return;
+      }
+
+      const existing = editFormId ? (state.teamForms || []).find(f => f.id === editFormId) : null;
+      if (existing) {
+        existing.title = title;
+        existing.audience = audience;
+        existing.description = description;
+        existing.questions = validQuestions;
+      } else {
+        state.teamForms.unshift({
+          id: `form-${Date.now()}`,
+          teamId,
+          title,
+          audience,
+          description,
+          questions: validQuestions,
+          responses: [],
+          createdAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        });
+      }
+
+      persistState();
+      cancelEditTeamForm();
+      renderAdminTeamForms();
+      if (activeSportPageId === teamId) {
+        const team = state.teams.find(t => t.id === teamId);
+        if (team) renderSportPageContent(team);
+      }
+      showToast(existing ? "Form updated!" : "Form published to sport page!", "success");
+    }
+
+    function openFormResultsModal(formId) {
+      const form = (state.teamForms || []).find(f => f.id === formId);
+      if (!form) return;
+      const responses = form.responses || [];
+      const qHeaders = (form.questions || []).map(q => typeof q === "string" ? q : q.label);
+
+      document.getElementById("form-results-modal-title").textContent = `${form.title} (${responses.length} Response${responses.length === 1 ? "" : "s"})`;
+      document.getElementById("form-results-export-btn").onclick = () => exportFormResponsesCsv(form.id);
+
+      const body = document.getElementById("form-results-modal-body");
+      if (responses.length === 0) {
+        body.innerHTML = `<p class="text-sm text-slate-500 py-8 text-center">No submissions have been received for this form yet.</p>`;
+      } else {
+        body.innerHTML = `
+          <div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 border-b border-slate-200 font-bold uppercase text-slate-600">
+                  <th class="py-2.5 px-3">Submitted By</th>
+                  <th class="py-2.5 px-3">Date / Time</th>
+                  ${qHeaders.map(h => `<th class="py-2.5 px-3">${escapeHtml(h)}</th>`).join("")}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                ${responses.map(r => `
+                  <tr class="hover:bg-slate-50">
+                    <td class="py-2.5 px-3 font-bold text-slate-900 whitespace-nowrap">${escapeHtml(r.submittedBy || "Visitor")}</td>
+                    <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${escapeHtml(r.submittedAt || "")}</td>
+                    ${qHeaders.map(h => `<td class="py-2.5 px-3 text-slate-700">${escapeHtml(r.answers?.[h] || "—")}</td>`).join("")}
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+      document.getElementById("form-results-modal").classList.remove("hidden");
+    }
+
+    function renderAdminTeamForms() {
+      const teamId = document.getElementById("admin-team-selector")?.value;
+      const container = document.getElementById("admin-team-forms-list");
+      if (!container) return;
+
+      const forms = (state.teamForms || []).filter(f => f.teamId === teamId);
+      if (forms.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500">No forms created for this program yet.</p>`;
+        return;
+      }
+
+      container.innerHTML = forms.map(f => `
+        <div class="p-4 rounded-xl bg-white border border-slate-200 space-y-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="font-bold text-sm text-forces-blue">${escapeHtml(f.title)}</span>
+              <span class="ml-2 px-2 py-0.5 rounded-full bg-sky-100 text-forces-blue text-[10px] font-bold uppercase">${f.audience === "SIGNED_IN" ? "CSW Login Only" : "Public"}</span>
+              <span class="ml-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">${(f.responses || []).length} Response(s)</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="openFormResultsModal('${f.id}')" class="px-3 py-1 rounded-lg bg-forces-blue text-white text-xs font-bold hover:bg-forces-royal">View Results</button>
+              <button onclick="startEditTeamForm('${f.id}')" class="px-3 py-1 rounded-lg bg-sky-100 text-forces-blue text-xs font-bold hover:bg-sky-200">Edit Form</button>
+              <button onclick="exportFormResponsesCsv('${f.id}')" class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">Export CSV</button>
+              <button onclick="deleteTeamForm('${f.id}')" class="text-xs font-bold text-rose-600 hover:underline">Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
 
       const validQuestions = draftFormQuestions
         .filter(q => q.label.trim().length > 0)
@@ -3735,17 +3956,6 @@
       a.click();
       URL.revokeObjectURL(url);
     }
-        
-    function renderAdminTeamForms() {
-      const teamId = document.getElementById("admin-team-selector")?.value;
-      const container = document.getElementById("admin-team-forms-list");
-      if (!container) return;
-
-      const forms = (state.teamForms || []).filter(f => f.teamId === teamId);
-      if (forms.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500">No forms created for this program yet.</p>`;
-        return;
-      }
 
       container.innerHTML = forms.map(f => `
         <div class="p-4 rounded-xl bg-white border border-slate-200 space-y-2">
@@ -3790,25 +4000,176 @@
       return `<div onclick="openMediaLightbox('${escapeHtml(a.mediaUrl)}', 'image', '${escapeHtml(a.title || "")}')" class="mt-3 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 p-1 cursor-zoom-in"><img src="${escapeHtml(a.mediaUrl)}" alt="${escapeHtml(a.title || "")}" class="w-full h-auto max-h-64 object-contain mx-auto rounded-lg" /></div>`;
     }
 
+    let activeUrgentAnnId = null;
+
+    function checkUrgentAnnouncementPopup() {
+      const urgentAnn = (state.announcements || []).find(a => a.urgent === true);
+      if (!urgentAnn) return;
+      const annId = String(urgentAnn.id);
+      if (sessionStorage.getItem("dismissed_urgent_ann_id") === annId) return;
+      activeUrgentAnnId = annId;
+      document.getElementById("urgent-ann-modal-tag").textContent = urgentAnn.tag || "Urgent";
+      document.getElementById("urgent-ann-modal-date").textContent = urgentAnn.date || "";
+      document.getElementById("urgent-ann-modal-title").textContent = urgentAnn.title || "";
+      document.getElementById("urgent-ann-modal-body").textContent = urgentAnn.body || "";
+      document.getElementById("urgent-announcement-modal").classList.remove("hidden");
+    }
+
+    function dismissUrgentAnnouncementModal() {
+      if (activeUrgentAnnId) sessionStorage.setItem("dismissed_urgent_ann_id", activeUrgentAnnId);
+      document.getElementById("urgent-announcement-modal").classList.add("hidden");
+    }
+
+    function getAnnouncementSpanClass(size) {
+      if (size === "full") return "md:col-span-3";
+      if (size === "wide") return "md:col-span-2";
+      return "md:col-span-1";
+    }
+
     function renderAnnouncementsGrid() {
       document.getElementById("announcements-grid").innerHTML = state.announcements.map(a => {
-        const isHiring = a.tag.includes("Hiring");
-        const badgeColors = isHiring ? "bg-amber-100 text-amber-900 border-amber-200" : "bg-sky-50 text-forces-royal border-sky-100";
-        const cardColors = isHiring ? "bg-amber-50/30 border-amber-200 shadow-md" : "bg-white border-slate-200 shadow-sm";
-        
+        const isHiring = (a.tag || "").includes("Hiring");
+        const isUrgent = a.urgent === true;
+        const spanClass = getAnnouncementSpanClass(a.cardSize || "standard");
+        const badgeColors = isUrgent
+          ? "bg-red-100 text-red-800 border-red-200"
+          : isHiring
+            ? "bg-amber-100 text-amber-900 border-amber-200"
+            : "bg-sky-50 text-forces-royal border-sky-100";
+        const cardColors = isUrgent
+          ? "bg-red-50/30 border-red-300 shadow-md"
+          : isHiring
+            ? "bg-amber-50/30 border-amber-200 shadow-md"
+            : "bg-white border-slate-200 shadow-sm";
+
         return `
-        <article class="${cardColors} rounded-2xl border p-6 flex flex-col justify-between transition hover:shadow-md">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="px-2.5 py-0.5 rounded-md border ${badgeColors} text-xs font-bold uppercase">${escapeHtml(a.tag)}</span>
+        <article class="${spanClass} ${cardColors} rounded-2xl border p-6 flex flex-col justify-between transition hover:shadow-md min-w-0">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-1.5">
+                ${isUrgent ? `<span class="px-2 py-0.5 rounded-md bg-red-600 text-white text-[10px] font-extrabold uppercase">Urgent</span>` : ""}
+                <span class="px-2.5 py-0.5 rounded-md border ${badgeColors} text-xs font-bold uppercase">${escapeHtml(a.tag)}</span>
+              </div>
               <span class="text-xs font-semibold text-slate-500">${escapeHtml(a.date)}</span>
             </div>
-            <h3 class="font-display text-xl font-bold text-forces-blue uppercase leading-snug">${escapeHtml(a.title)}</h3>
-            <p class="text-sm text-slate-700 mt-2 leading-relaxed">${escapeHtml(a.body)}</p>
+            <h3 class="font-display text-xl font-bold text-forces-blue uppercase leading-snug break-words">${escapeHtml(a.title)}</h3>
+            <p class="text-sm text-slate-700 mt-2 leading-relaxed whitespace-pre-line break-words">${escapeHtml(a.body)}</p>
             ${renderAnnouncementMediaHtml(a)}
           </div>
         </article>
-      `}).join("");
+      `;
+      }).join("");
+      checkUrgentAnnouncementPopup();
+    }
+
+    async function publishAnnouncement(e) {
+      e.preventDefault();
+      const editId = document.getElementById("news-edit-id")?.value || "";
+      const title = document.getElementById("news-title").value.trim();
+      const tag = document.getElementById("news-tag").value;
+      const cardSize = document.getElementById("news-card-size")?.value || "standard";
+      const body = document.getElementById("news-body").value.trim();
+      const urgent = document.getElementById("news-urgent")?.checked || false;
+      const fileInput = document.getElementById("news-media-file");
+      const file = fileInput && fileInput.files && fileInput.files[0];
+      const date = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+      const existing = editId ? state.announcements.find(a => a.id === editId) : null;
+      let mediaUrl = existing ? (existing.mediaUrl || "") : "";
+      let mediaType = existing ? (existing.mediaType || "") : "";
+
+      if (file) {
+        const isVideo = (file.type || "").startsWith("video/");
+        const path = `announcements/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi, "_")}`;
+        showToast(isVideo ? "Uploading announcement video..." : "Uploading announcement photo...", "info");
+        const { error: upErr } = await supabaseClient.storage.from("team-photos").upload(path, file, { upsert: true });
+        if (upErr) {
+          showToast("Media upload failed: " + upErr.message, "error");
+          return;
+        }
+        const { data: pubData } = supabaseClient.storage.from("team-photos").getPublicUrl(path);
+        mediaUrl = pubData.publicUrl;
+        mediaType = isVideo ? "video" : "image";
+      }
+
+      if (existing) {
+        existing.title = title;
+        existing.tag = tag;
+        existing.cardSize = cardSize;
+        existing.body = body;
+        existing.urgent = urgent;
+        existing.mediaUrl = mediaUrl;
+        existing.mediaType = mediaType;
+      } else {
+        state.announcements.unshift({ id: `n-${Date.now()}`, title, tag, cardSize, date, body, urgent, mediaUrl, mediaType });
+      }
+
+      persistState();
+      cancelEditAnnouncement();
+      renderAdminNews();
+      renderPublicPortal();
+      showToast(existing ? "Announcement updated!" : "Announcement published!", "success");
+    }
+
+    function startEditAnnouncement(id) {
+      const ann = state.announcements.find(a => a.id === id);
+      if (!ann) return;
+      document.getElementById("news-edit-id").value = ann.id;
+      document.getElementById("news-title").value = ann.title || "";
+      document.getElementById("news-tag").value = ann.tag || "Forces Athletics";
+      document.getElementById("news-card-size").value = ann.cardSize || "standard";
+      document.getElementById("news-body").value = ann.body || "";
+      document.getElementById("news-urgent").checked = ann.urgent === true;
+      document.getElementById("news-form-heading").textContent = "Edit Department Announcement";
+      document.getElementById("btn-submit-news").textContent = "Save Announcement Changes";
+      document.getElementById("btn-cancel-edit-news").classList.remove("hidden");
+      document.getElementById("admin-panel-news").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function cancelEditAnnouncement() {
+      if (document.getElementById("news-edit-id")) document.getElementById("news-edit-id").value = "";
+      document.getElementById("news-title").value = "";
+      document.getElementById("news-body").value = "";
+      if (document.getElementById("news-card-size")) document.getElementById("news-card-size").value = "standard";
+      if (document.getElementById("news-urgent")) document.getElementById("news-urgent").checked = false;
+      if (document.getElementById("news-media-file")) document.getElementById("news-media-file").value = "";
+      if (document.getElementById("news-form-heading")) document.getElementById("news-form-heading").textContent = "Publish Department Announcement";
+      if (document.getElementById("btn-submit-news")) document.getElementById("btn-submit-news").textContent = "Publish to Portal";
+      document.getElementById("btn-cancel-edit-news")?.classList.add("hidden");
+    }
+
+    function updateAnnouncementCardSize(id, size) {
+      const ann = state.announcements.find(a => a.id === id);
+      if (!ann) return;
+      ann.cardSize = size;
+      persistState();
+      renderPublicPortal();
+      showToast("Announcement card size updated!", "success");
+    }
+
+    function renderAdminNews() {
+      document.getElementById("admin-news-list").innerHTML = state.announcements.map(a => `
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs font-bold text-forces-royal uppercase">${escapeHtml(a.tag)} • ${escapeHtml(a.date)}</span>
+              ${a.urgent ? `<span class="px-2 py-0.5 rounded bg-red-100 text-red-800 text-[10px] font-extrabold uppercase">Urgent Pop-Up</span>` : ""}
+            </div>
+            <h4 class="font-bold text-sm text-slate-900 mt-0.5 break-words">${escapeHtml(a.title)}</h4>
+            <p class="text-xs text-slate-600 mt-1 whitespace-pre-line break-words">${escapeHtml(a.body)}</p>
+            ${a.mediaUrl ? `<div class="max-w-xs">${renderAnnouncementMediaHtml(a)}</div>` : ""}
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <select onchange="updateAnnouncementCardSize('${a.id}', this.value)" title="Card Size" class="px-2 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold">
+              <option value="standard" ${(a.cardSize || "standard") === "standard" ? "selected" : ""}>1 Col</option>
+              <option value="wide" ${a.cardSize === "wide" ? "selected" : ""}>2 Cols</option>
+              <option value="full" ${a.cardSize === "full" ? "selected" : ""}>Full Width</option>
+            </select>
+            <button onclick="startEditAnnouncement('${a.id}')" class="px-2.5 py-1 rounded-lg bg-sky-100 text-forces-blue text-xs font-bold hover:bg-sky-200">Edit</button>
+            <button onclick="deleteAnnouncement('${a.id}')" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold hover:bg-rose-100">Delete</button>
+          </div>
+        </div>
+      `).join("");
     }
 
     // ---------------------------------------------------------
@@ -5719,47 +6080,59 @@ const coachesListEl = document.getElementById("admin-program-coaches-list");
       const password = document.getElementById("new-stu-pass").value;
 
       if (state.studentDirectory.some(s => s.email.toLowerCase() === email)) {
-        showToast("A student with this email is already registered.", "error");
+        showToast("A student with this email is already in the directory.", "error");
         return;
       }
 
       const tempAuthClient = createIsolatedAuthClient();
-      const { data, error } = await tempAuthClient.auth.signUp({
-        email: email,
-        password: password
-      });
+      const { data, error } = await tempAuthClient.auth.signUp({ email, password });
+
+      const alreadyInAuth =
+        (error && /already registered|already exists/i.test(error.message)) ||
+        (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0);
+
+      if (alreadyInAuth) {
+        const { data: relinkedId, error: rpcErr } = await supabaseClient.rpc("admin_relink_student", {
+          target_email: email,
+          full_name: name,
+          stu_grade: grade
+        });
+        if (!rpcErr && relinkedId) {
+          state.studentDirectory.push({ id: relinkedId, name, email, grade });
+          persistState();
+          renderStudentDirectoryTable();
+          loadAdminTeamEditor();
+          e.target.reset();
+          await supabaseClient.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin + window.location.pathname
+          });
+          showToast(`${name} restored to directory & password reset email sent!`, "success");
+          return;
+        }
+        showToast("Run the admin_relink_student SQL snippet in Supabase once to re-link previously deleted student emails.", "error");
+        return;
+      }
 
       if (error) {
         showToast("Supabase Auth error: " + error.message, "error");
         return;
       }
 
-      if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-        showToast("An account with this email already exists.", "error");
-        return;
-      }
-
-      // Save the student's profile into csw_profiles
       if (data?.user) {
-        const { error: profErr } = await supabaseClient.from("csw_profiles").insert({
+        const { error: profErr } = await supabaseClient.from("csw_profiles").upsert({
           id: data.user.id,
-          email: email,
+          email,
           full_name: name,
           role: "STUDENT",
-          grade: grade
+          grade
         });
         if (profErr) {
-          showToast("Account created, but saving the student profile failed: " + profErr.message, "error");
+          showToast("Account created, but saving profile failed: " + profErr.message, "error");
           return;
         }
+        state.studentDirectory.push({ id: data.user.id, name, email, grade });
       }
-      state.studentDirectory.push({
-        id: data.user.id,
-        name,
-        email,
-        grade
-      });
-      
+
       persistState();
       renderStudentDirectoryTable();
       loadAdminTeamEditor();
@@ -6022,59 +6395,11 @@ return `
 
 } 
     
-    async function publishAnnouncement(e) {
-      e.preventDefault();
-      const title = document.getElementById("news-title").value.trim();
-      const tag = document.getElementById("news-tag").value;
-      const body = document.getElementById("news-body").value.trim();
-      const urgent = document.getElementById("news-urgent")?.checked || false;
-      const fileInput = document.getElementById("news-media-file");
-      const file = fileInput && fileInput.files && fileInput.files[0];
-      const date = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
-
-      let mediaUrl = "";
-      let mediaType = "";
-      if (file) {
-        const isVideo = (file.type || "").startsWith("video/");
-        const path = `announcements/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi, "_")}`;
-        showToast(isVideo ? "Uploading announcement video..." : "Uploading announcement photo...", "info");
-        const { error: upErr } = await supabaseClient.storage.from("team-photos").upload(path, file, { upsert: true });
-        if (upErr) {
-          showToast("Media upload failed: " + upErr.message, "error");
-          return;
-        }
-        const { data: pubData } = supabaseClient.storage.from("team-photos").getPublicUrl(path);
-        mediaUrl = pubData.publicUrl;
-        mediaType = isVideo ? "video" : "image";
-      }
-
-      state.announcements.unshift({ id: `n-${Date.now()}`, title, tag, date, body, urgent, mediaUrl, mediaType });
-      persistState();
-      renderAdminNews();
-      renderPublicPortal();
-      e.target.reset();
-      showToast(urgent ? "Urgent announcement published with site pop-up!" : "Announcement published!", "success");
-    }
-    
     function deleteAnnouncement(id) {
       state.announcements = state.announcements.filter(a => a.id !== id);
       persistState();
       renderAdminNews();
       renderPublicPortal();
-    }
-
-    function renderAdminNews() {
-      document.getElementById("admin-news-list").innerHTML = state.announcements.map(a => `
-        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3">
-          <div class="flex-1 min-w-0">
-            <span class="text-xs font-bold text-forces-royal uppercase">${escapeHtml(a.tag)} • ${escapeHtml(a.date)}</span>
-            <h4 class="font-bold text-sm text-slate-900 mt-0.5">${escapeHtml(a.title)}</h4>
-            <p class="text-xs text-slate-600 mt-1">${escapeHtml(a.body)}</p>
-            ${a.mediaUrl ? `<div class="max-w-xs">${renderAnnouncementMediaHtml(a)}</div>` : ""}
-          </div>
-          <button onclick="deleteAnnouncement('${a.id}')" class="text-xs font-bold text-rose-600 hover:underline shrink-0">Delete</button>
-        </div>
-      `).join("");
     }
 
     function renderStaffDirectory() {
