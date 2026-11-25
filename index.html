@@ -1137,10 +1137,10 @@
           </div>
         </div>
 
-        <form onsubmit="createClassExcusal(event)" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <form data-ui-submit="createClassExcusal" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Team</label>
-            <select id="excusal-team-select" onchange="populateExcusalRosterCheckboxes()" required class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white"></select>
+            <select id="excusal-team-select" data-ui-event="change" data-ui-action="populateExcusalRosterCheckboxes" required class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white"></select>
           </div>
           <div>
             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Date</label>
@@ -1602,7 +1602,6 @@
       </form>
 
       <!-- Step 2: Email OTP 2FA Verification -->
-      <!-- Step 2: Email OTP 2FA Verification -->
       <div id="login-step-2" class="hidden space-y-4">
         <div class="p-3.5 rounded-xl bg-sky-50 border border-sky-200 text-xs text-slate-700 space-y-1.5">
           <div class="font-bold text-forces-blue">Email One-Time Passcode (OTP)</div>
@@ -1800,14 +1799,14 @@
         <button onclick="closeModal('create-group-modal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
       </div>
 
-      <form onsubmit="createCustomChatGroup(event)" class="space-y-4">
+      <form data-ui-submit="createCustomChatGroup" class="space-y-4">
         <div>
           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Group Name</label>
           <input type="text" id="new-group-name" required placeholder="e.g., Varsity Captains / Away Travel Squad" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Associated Program</label>
-          <select id="new-group-team" onchange="populateGroupMemberCheckboxes()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white"></select>
+          <select id="new-group-team" data-ui-event="change" data-ui-action="populateGroupMemberCheckboxes" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white"></select>
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Who Can Send Messages?</label>
@@ -1819,7 +1818,7 @@
         <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-bold uppercase text-slate-700">Select Group Members</span>
-            <button type="button" onclick="toggleAllGroupMembers()" class="text-xs font-semibold text-forces-royal hover:underline">Select / Deselect All</button>
+            <button type="button" data-ui-action="toggleAllGroupMembers" class="text-xs font-semibold text-forces-royal hover:underline">Select / Deselect All</button>
           </div>
           <div id="new-group-members-list" class="space-y-1.5 max-h-44 overflow-y-auto"></div>
         </div>
@@ -1841,7 +1840,7 @@
         <button onclick="closeModal('manage-group-modal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
       </div>
 
-      <form onsubmit="saveGroupSettings(event)" class="space-y-4">
+      <form data-ui-submit="saveGroupSettings" class="space-y-4">
         <div>
           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Messaging Permission</label>
           <select id="manage-group-permission" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold bg-white">
@@ -1856,7 +1855,7 @@
         </div>
 
         <div class="flex items-center justify-between gap-3 pt-2">
-          <button type="button" id="btn-delete-custom-group" onclick="deleteActiveCustomGroup()" class="hidden px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition">
+          <button type="button" id="btn-delete-custom-group" data-ui-action="deleteActiveCustomGroup" class="hidden px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition">
             Delete Group
           </button>
           <button type="submit" class="ml-auto px-5 py-2.5 rounded-xl bg-forces-blue hover:bg-forces-royal text-white font-bold text-sm transition">
@@ -1877,7 +1876,7 @@
         </div>
         <button onclick="closeModal('direct-message-modal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
       </div>
-      <form onsubmit="startDirectMessage(event)" class="space-y-4">
+      <form data-ui-submit="startDirectMessage" class="space-y-4">
         <div>
           <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Select Recipient (Coach, AD, or Teammate)</label>
           <select id="dm-recipient-select" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white"></select>
@@ -2054,6 +2053,36 @@
         .replace(/'/g, "&#039;");
     }
 
+    function safePublicMediaUrl(value) {
+      try {
+        const url = new URL(String(value || ""));
+        const projectOrigin = new URL(SUPABASE_DEFAULT.url).origin;
+        if (url.protocol !== "https:" || url.origin !== projectOrigin ||
+            !url.pathname.startsWith("/storage/v1/object/public/team-photos/")) {
+          return "";
+        }
+        return url.href;
+      } catch {
+        return "";
+      }
+    }
+
+    function getUploadMediaType(file) {
+      const allowedTypes = new Set([
+        "image/avif", "image/gif", "image/jpeg", "image/png", "image/webp",
+        "video/mp4", "video/ogg", "video/quicktime", "video/webm"
+      ]);
+      if (!file || !allowedTypes.has((file.type || "").toLowerCase())) return "";
+      if (file.size <= 0 || file.size > 100 * 1024 * 1024) return "";
+      return file.type.toLowerCase();
+    }
+
+    function getChatMediaChannelKey(channelId) {
+      const bytes = new TextEncoder().encode(channelId);
+      const binary = Array.from(bytes, byte => String.fromCharCode(byte)).join("");
+      return "c_" + btoa(binary).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+    }
+
     function getCoachTeamIds(user) {
       if (!user) return [];
       if (user.role === "AD") return state.teams.map(t => t.id);
@@ -2100,6 +2129,103 @@
       document.getElementById(id)?.classList.add("hidden");
     }
 
+    function handleDynamicUiAction(event) {
+      if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+      if (event.type === "keydown" && ["BUTTON", "A"].includes(event.target?.tagName)) return;
+      const eventAttr = event.type === "submit" ? "uiSubmit" : "uiAction";
+      const target = event.target instanceof Element
+        ? event.target.closest(`[data-${eventAttr.replace(/[A-Z]/g, c => "-" + c.toLowerCase())}]`)
+        : null;
+      if (!target) return;
+      if (event.type !== "submit") {
+        if (target.dataset.uiEvent) {
+          if (target.dataset.uiEvent !== event.type) return;
+        } else if (event.type !== "click" && event.type !== "keydown") {
+          return;
+        }
+      }
+      if (event.type === "submit") event.preventDefault();
+      if (event.type === "keydown") event.preventDefault();
+
+      const action = target.dataset.uiAction || target.dataset.uiSubmit;
+      const id = target.dataset.userId;
+      let result;
+      try {
+        switch (action) {
+          case "openTeamChatDirect": result = openTeamChatDirect(target.dataset.teamId); break;
+          case "openSportPage": result = openSportPage(target.dataset.teamId); break;
+          case "createClassExcusal": result = createClassExcusal(event); break;
+          case "createCustomChatGroup": result = createCustomChatGroup(event); break;
+          case "saveGroupSettings": result = saveGroupSettings(event); break;
+          case "startDirectMessage": result = startDirectMessage(event); break;
+          case "deleteActiveCustomGroup": result = deleteActiveCustomGroup(); break;
+          case "openMediaLightbox":
+            result = openMediaLightbox(target.dataset.mediaUrl, target.dataset.mediaType, target.dataset.mediaCaption);
+            break;
+          case "deleteTeamPhoto": result = deleteTeamPhoto(target.dataset.photoId, target.dataset.storagePath); break;
+          case "updateTeamPhotoSize": result = updateTeamPhotoSize(target.dataset.photoId, target.value); break;
+          case "updateDraftQuestion":
+            result = updateDraftQuestion(Number(target.dataset.questionIndex), target.dataset.questionField,
+              target.type === "checkbox" ? target.checked : target.value);
+            break;
+          case "updateDraftOption":
+            result = updateDraftOption(Number(target.dataset.questionIndex), Number(target.dataset.optionIndex), target.value);
+            break;
+          case "removeDraftOption":
+            result = removeDraftOption(Number(target.dataset.questionIndex), Number(target.dataset.optionIndex));
+            break;
+          case "addDraftOption": result = addDraftOption(Number(target.dataset.questionIndex)); break;
+          case "removeVisualFormQuestion": result = removeVisualFormQuestion(Number(target.dataset.questionIndex)); break;
+          case "openFormResultsModal": result = openFormResultsModal(target.dataset.formId); break;
+          case "startEditTeamForm": result = startEditTeamForm(target.dataset.formId); break;
+          case "exportFormResponsesCsv": result = exportFormResponsesCsv(target.dataset.formId); break;
+          case "deleteTeamForm": result = deleteTeamForm(target.dataset.formId); break;
+          case "submitTeamFormResponse": result = submitTeamFormResponse(event, target.dataset.formId); break;
+          case "updateAnnouncementCardSize": result = updateAnnouncementCardSize(target.dataset.announcementId, target.value); break;
+          case "startEditAnnouncement": result = startEditAnnouncement(target.dataset.announcementId); break;
+          case "deleteAnnouncement": result = deleteAnnouncement(target.dataset.announcementId); break;
+          case "selectChatChannel": result = selectChatChannel(target.dataset.channelId); break;
+          case "saveGameScore": result = saveGameScore(target.dataset.gameId); break;
+          case "deleteGame": result = deleteGame(target.dataset.gameId); break;
+          case "deletePractice": result = deletePractice(target.dataset.practiceId); break;
+          case "setPracticeAttendance":
+            result = setPracticeAttendance(target.dataset.practiceId, target.dataset.studentEmail, target.value);
+            break;
+          case "removeProgramCoachEntry":
+            result = removeProgramCoachEntry(target.dataset.teamId, Number(target.dataset.entryIndex));
+            break;
+          case "removeRosterPlayer":
+            result = removeRosterPlayer(target.dataset.teamId, Number(target.dataset.entryIndex));
+            break;
+          case "openPrintableExcusal": result = openPrintableExcusal(target.dataset.excusalId); break;
+          case "deleteExcusal": result = deleteExcusal(target.dataset.excusalId); break;
+          case "dismissPasswordResetAlert": result = dismissPasswordResetAlert(target.dataset.alertId); break;
+          case "dismissAllPasswordResetAlerts": result = dismissAllPasswordResetAlerts(); break;
+          case "populateExcusalRosterCheckboxes": result = populateExcusalRosterCheckboxes(); break;
+          case "populateGroupMemberCheckboxes": result = populateGroupMemberCheckboxes(); break;
+          case "toggleAllGroupMembers": result = toggleAllGroupMembers(); break;
+          case "closeModal": result = closeModal(target.dataset.modalId); break;
+          case "sendResetEmailById": result = sendResetEmailById(id, target.dataset.accountType); break;
+          case "deleteStudentFromDirectory": result = deleteStudentFromDirectory(id); break;
+          case "openEditStaffModal": result = openEditStaffModal(id); break;
+          case "resetStaffTwoFactor": result = resetStaffTwoFactor(id); break;
+          case "deleteStaffUser": result = deleteStaffUser(id); break;
+          default: return;
+        }
+      } catch (error) {
+        console.error("UI action failed:", error);
+        showToast("That action could not be completed: " + (error?.message || "Unexpected error."), "error");
+        return;
+      }
+
+      if (result && typeof result.then === "function") {
+        result.catch(error => {
+          console.error("UI action failed:", error);
+          showToast("That action could not be completed: " + (error?.message || "Unexpected error."), "error");
+        });
+      }
+    }
+
     function scrollToSection(id) {
       setTimeout(() => {
         const el = document.getElementById(id);
@@ -2143,21 +2269,12 @@
       if (Array.isArray(payload.practices)) {
         state.practices = isRemoteMerge ? mergeById(state.practices, payload.practices) : payload.practices;
       }
-      if (Array.isArray(payload.excusals)) state.excusals = payload.excusals;
       if (Array.isArray(payload.announcements)) state.announcements = payload.announcements;
-      if (Array.isArray(payload.staffUsers)) state.staffUsers = payload.staffUsers;
-      if (Array.isArray(payload.studentDirectory)) state.studentDirectory = payload.studentDirectory;
-      if (Array.isArray(payload.passwordResetLogs)) {
-        state.passwordResetLogs = isRemoteMerge ? mergeById(state.passwordResetLogs || [], payload.passwordResetLogs) : payload.passwordResetLogs;
-      }
       if (Array.isArray(payload.alertSubscribers)) state.alertSubscribers = payload.alertSubscribers;
       if (Array.isArray(payload.teacherMailingList)) state.teacherMailingList = payload.teacherMailingList;
       if (payload.urgentAlert && typeof payload.urgentAlert === "object") state.urgentAlert = payload.urgentAlert;
       if (payload.teamChatPermissions && typeof payload.teamChatPermissions === "object") {
         state.teamChatPermissions = { ...state.teamChatPermissions, ...payload.teamChatPermissions };
-      }
-      if (Array.isArray(payload.chatGroups)) {
-        state.chatGroups = isRemoteMerge ? mergeById(state.chatGroups, payload.chatGroups) : payload.chatGroups;
       }
       if (Array.isArray(payload.chatMessages)) {
         const mergedMsgs = isRemoteMerge ? mergeById(state.chatMessages, payload.chatMessages) : payload.chatMessages;
@@ -2175,7 +2292,16 @@
 
     function saveLocalCache() {
       try {
-        localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(state));
+        localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify({
+          ...state,
+          excusals: [],
+          chatGroups: [],
+          chatMessages: [],
+          chatReactions: [],
+          staffUsers: [],
+          studentDirectory: [],
+          passwordResetLogs: []
+        }));
       } catch (e) {}
     }
 
@@ -2184,6 +2310,13 @@
         const raw = localStorage.getItem(LOCAL_CACHE_KEY);
         if (raw) {
           applyLoadedPayload(JSON.parse(raw), false);
+          state.excusals = [];
+          state.chatGroups = [];
+          state.chatMessages = [];
+          state.chatReactions = [];
+          state.staffUsers = [];
+          state.studentDirectory = [];
+          state.passwordResetLogs = [];
         }
       } catch (e) {}
     }
@@ -2236,36 +2369,14 @@
           setCloudStatus("Local Save Only", false);
         }
 
-        // 2. Fetch normalized profiles, games, and chat messages
-        const [profRes, gamesRes, chatRes] = await Promise.all([
-          supabaseClient.from("csw_profiles").select("*"),
-          supabaseClient.from("csw_games").select("*").order("game_date", { ascending: true }),
-          supabaseClient.from("csw_chat_messages").select("*").order("created_at", { ascending: false }).limit(500)
+        // 2. Public game data is loaded here; private directories and chat load after sign-in.
+        const [gamesRes] = await Promise.all([
+          supabaseClient.from("csw_games").select("*").order("game_date", { ascending: true })
         ]);
 
-        if (!profRes.error && profRes.data) {
-          state.staffUsers = profRes.data
-            .filter(p => p.role === "AD" || p.role === "COACH")
-            .map(p => ({
-              id: p.id,
-              role: p.role,
-              name: p.full_name,
-              email: p.email,
-              phone: p.phone || "",
-              assignedTeamIds: p.assigned_team_ids || (p.team_id ? [p.team_id] : [])
-            }));
-
-          state.studentDirectory = profRes.data
-            .filter(p => p.role === "STUDENT")
-            .map(p => ({
-              id: p.id,
-              name: p.full_name,
-              email: p.email,
-              grade: p.grade || "9"
-            }));
-        }
-
-        if (!gamesRes.error && gamesRes.data) {
+        if (gamesRes.error) {
+          console.error("Could not load games:", gamesRes.error.message);
+        } else if (gamesRes.data) {
           state.games = gamesRes.data.map(g => ({
             id: g.id,
             teamId: g.team_id,
@@ -2280,11 +2391,6 @@
             busTime: g.bus_time || "",
             busNum: g.bus_num || ""
           }));
-        }
-
-        if (!chatRes.error && chatRes.data) {
-          // Query is newest-first (so we always get the LATEST 500); flip to chronological.
-          state.chatMessages = chatRes.data.slice().reverse().map(mapChatRow);
         }
 
         saveLocalCache();
@@ -2325,13 +2431,11 @@
           lastUpdated: state.lastUpdated,
           teams: state.teams,
           practices: state.practices,
-          excusals: state.excusals,
           announcements: state.announcements,
           alertSubscribers: state.alertSubscribers,
           teacherMailingList: state.teacherMailingList,
           urgentAlert: state.urgentAlert,
           teamChatPermissions: state.teamChatPermissions,
-          chatGroups: state.chatGroups,
           teamPhotos: state.teamPhotos,
           teamForms: state.teamForms,
           webhookConfig: state.webhookConfig,
@@ -2355,39 +2459,116 @@
 
     async function callAppsScriptBridge(action, dataObj) {
       const cfg = (state.webhookConfig && state.webhookConfig.url) ? state.webhookConfig : GAS_DEFAULT;
-      if (!cfg || !cfg.url) return { ok: false, error: "No URL configured" };
-
-      let accessToken = "";
-      try {
-        const { data: sd } = await supabaseClient.auth.getSession();
-        accessToken = (sd && sd.session && sd.session.access_token) || "";
-      } catch (e) {}
-      const payloadObj = {
-        access_token: accessToken,
-        action,
-        ...dataObj
+      const fail = (message) => {
+        console.error("Apps Script Bridge Delivery Error:", message);
+        showToast("Could not send the notification: " + message, "error");
+        return { ok: false, error: message };
       };
-      
+      const schemas = {
+        schedule_alert: { recipients: "emails", subject: "text", message: "text" },
+        roster_blast: { recipients: "emails", teamName: "text", senderName: "text", subject: "text", message: "text" },
+        class_excusal: { recipients: "emails", teamName: "text", date: "text", time: "text", reason: "text", students: "text_list", issuedBy: "text" }
+      };
+      const schema = schemas[action];
+      if (!cfg || !cfg.url) return fail("No Apps Script URL is configured.");
+      if (!schema) return fail("Unsupported notification action.");
+      if (!dataObj || typeof dataObj !== "object" || Array.isArray(dataObj)) return fail("Invalid notification payload.");
+
+      const unexpectedFields = Object.keys(dataObj).filter(key => !Object.hasOwn(schema, key));
+      if (unexpectedFields.length > 0) return fail("The notification contains unsupported fields.");
+
+      const safeFields = {};
+      for (const [field, type] of Object.entries(schema)) {
+        const value = dataObj[field];
+        if (type === "emails") {
+          if (!Array.isArray(value) || value.length === 0 || value.length > 500 ||
+              value.some(email => typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+            return fail("The notification has an invalid recipient list.");
+          }
+          safeFields[field] = [...new Set(value.map(email => email.trim().toLowerCase()))];
+        } else if (type === "text_list") {
+          if (!Array.isArray(value) || value.length > 500 ||
+              value.some(item => typeof item !== "string" || item.length > 500)) {
+            return fail("The notification contains invalid student entries.");
+          }
+          safeFields[field] = value.map(item => item.trim());
+        } else {
+          const maxLength = field === "message" || field === "reason" ? 10000 : 500;
+          if (typeof value !== "string" || value.length > maxLength) {
+            return fail("The notification contains invalid text.");
+          }
+          safeFields[field] = value;
+        }
+      }
+
+      let endpoint;
       try {
-        const jsonStr = JSON.stringify(payloadObj);
+        endpoint = new URL(cfg.url);
+      } catch {
+        return fail("The Apps Script URL is invalid.");
+      }
+      if (endpoint.protocol !== "https:" || endpoint.hostname !== "script.google.com") {
+        return fail("The Apps Script URL must use the trusted Google Apps Script host.");
+      }
+      if (!supabaseClient) return fail("Supabase authentication is unavailable.");
 
-        // Send a clean, standard POST request to Apps Script
-        fetch(cfg.url, {
+      let session;
+      try {
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) return fail("Could not verify the current sign-in: " + error.message);
+        session = data?.session;
+      } catch (error) {
+        return fail("Could not verify the current sign-in: " + (error?.message || "unknown error"));
+      }
+      if (!session?.access_token) return fail("Sign in again before sending this notification.");
+
+      const payloadObj = { ...safeFields, action, access_token: session.access_token };
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      try {
+        const response = await fetch(endpoint.href, {
           method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain" },
-          body: jsonStr
-        }).catch(() => {});
-
-        // Resolve immediately so UI proceeds
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payloadObj),
+          signal: controller.signal
+        });
+        const responseText = await response.text();
+        if (!response.ok) throw new Error(`Apps Script returned HTTP ${response.status}.`);
+        if (responseText) {
+          try {
+            const result = JSON.parse(responseText);
+            if (result && (result.ok === false || result.success === false)) {
+              throw new Error(result.error || "Apps Script rejected the notification.");
+            }
+          } catch (error) {
+            if (error instanceof SyntaxError) {
+              // Plain-text responses are valid; only JSON error responses are interpreted.
+            } else {
+              throw error;
+            }
+          }
+        }
         return { ok: true };
-      } catch (err) {
-        console.error("Apps Script Bridge Delivery Error:", err);
-        return { ok: false, error: err.message };
+      } catch (error) {
+        const message = error?.name === "AbortError"
+          ? "The Apps Script request timed out."
+          : (error?.message || "Network or CORS error while contacting Apps Script.");
+        return fail(message);
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
 
     function saveSession(sessionObj, persistDevice = true) {
+      if (currentSession && currentSession.id !== sessionObj.id) {
+        chatMediaSignedUrlCache.clear();
+        state.chatMessages = [];
+        state.chatReactions = [];
+        state.chatGroups = [];
+        state.excusals = [];
+        state.staffUsers = [];
+        state.studentDirectory = [];
+      }
       currentSession = sessionObj;
       try {
         if (persistDevice) {
@@ -2419,6 +2600,11 @@
       // Don't leave private chat history on a shared device
       state.chatMessages = [];
       state.chatReactions = [];
+      state.chatGroups = [];
+      state.excusals = [];
+      state.staffUsers = [];
+      state.studentDirectory = [];
+      chatMediaSignedUrlCache.clear();
       activeChatChannelId = null;
       lastRenderedChannelId = null;
       openReactionPickerId = null;
@@ -2778,26 +2964,26 @@
         let found = null;
         const { data: profileRow, error: profileErr } = await supabaseClient
           .from("csw_profiles")
-          .select("*")
+          .select("id,email,full_name,role,phone,team_id,assigned_team_ids")
           .eq("id", data.user.id)
           .maybeSingle();
 
-        if (!profileErr) {
-          if (profileRow && (profileRow.role === "AD" || profileRow.role === "COACH")) {
-            found = {
-              id: profileRow.id,
-              role: profileRow.role,
-              name: profileRow.full_name,
-              email: profileRow.email,
-              phone: profileRow.phone || "",
-              assignedTeamIds: profileRow.assigned_team_ids || (profileRow.team_id ? [profileRow.team_id] : [])
-            };
-            state.staffUsers = state.staffUsers.filter(u => u.id !== found.id);
-            state.staffUsers.push(found);
-            saveLocalCache();
-          }
-        } else {
-          found = state.staffUsers.find(u => (u.email || "").toLowerCase() === email) || null;
+        if (profileErr) {
+          await abort("Could not verify your staff profile: " + profileErr.message);
+          return;
+        }
+        if (profileRow && (profileRow.role === "AD" || profileRow.role === "COACH")) {
+          found = {
+            id: profileRow.id,
+            role: profileRow.role,
+            name: profileRow.full_name,
+            email: profileRow.email,
+            phone: profileRow.phone || "",
+            assignedTeamIds: profileRow.assigned_team_ids || (profileRow.team_id ? [profileRow.team_id] : [])
+          };
+          state.staffUsers = state.staffUsers.filter(u => u.id !== found.id);
+          state.staffUsers.push(found);
+          saveLocalCache();
         }
 
         if (!found) {
@@ -2905,7 +3091,7 @@
 
         closeModal("login-modal");
         resetStaffLoginModal();
-        initChatSession();
+        await initChatSession();
         switchMainView("admin");
         showToast(`Email Verified! Welcome back, ${currentSession.name}.`, "success");
       } catch (err) {
@@ -2930,18 +3116,30 @@
       const email = document.getElementById("stu-login-email").value.trim().toLowerCase();
       const pass = document.getElementById("stu-login-pass").value;
 
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
       if (error) {
         showToast("Login failed: " + error.message, "error");
         return;
       }
 
-      const stu = state.studentDirectory.find(s => s.email.toLowerCase() === email);
-      if (!stu) {
+      const { data: profile, error: profileError } = await supabaseClient
+        .from("csw_profiles")
+        .select("id,email,full_name,role,grade")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      if (profileError || !profile || profile.role !== "STUDENT") {
         await supabaseClient.auth.signOut({ scope: "local" }).catch(() => {});
-        showToast("Signed in, but your student profile is not in the directory yet.", "error");
+        showToast(profileError
+          ? "Could not verify your student profile: " + profileError.message
+          : "This account is not a student account.", "error");
         return;
       }
+      const stu = {
+        id: profile.id,
+        name: profile.full_name,
+        email: profile.email,
+        grade: profile.grade || "9"
+      };
 
       const staySignedIn = document.getElementById("stu-stay-signed-in").checked;
       saveSession({
@@ -2953,7 +3151,7 @@
       }, staySignedIn);
 
       closeModal("student-login-modal");
-      initChatSession();
+      await initChatSession();
       switchMainView("student");
       showToast(`Signed in as ${stu.name}`, "success");
     }
@@ -2991,7 +3189,7 @@
             <p class="text-xs text-slate-600 mt-1">Head Coach: ${escapeHtml(t.coach)}</p>
             <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
               <span class="font-bold text-slate-700">#${escapeHtml(me?.number || "-")} • ${escapeHtml(me?.position || "Athlete")}</span>
-              <button onclick="openTeamChatDirect('${t.id}')" class="font-bold text-forces-royal hover:underline">Team Chat →</button>
+              <button type="button" data-ui-action="openTeamChatDirect" data-team-id="${escapeHtml(t.id)}" class="font-bold text-forces-royal hover:underline">Team Chat →</button>
             </div>
           </div>
         `;
@@ -3074,7 +3272,7 @@
       const teamFilter = document.getElementById("filter-team");
       const prevTeamVal = teamFilter.value;
       teamFilter.innerHTML = `<option value="ALL">All Forces Teams</option>` +
-        state.teams.map(t => `<option value="${t.id}">${escapeHtml(t.name)} (${t.season})</option>`).join("");
+        state.teams.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)} (${escapeHtml(t.season)})</option>`).join("");
       if ([...teamFilter.options].some(o => o.value === prevTeamVal)) teamFilter.value = prevTeamVal;
 
     renderPublicSchedule();
@@ -3191,7 +3389,7 @@
           </div>
           <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
             <a href="mailto:${escapeHtml(t.email)}" class="text-xs font-semibold text-slate-500 hover:text-forces-blue">Contact Coach</a>
-            <button onclick="openSportPage('${t.id}')" class="px-3.5 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white text-xs font-bold transition">
+            <button type="button" data-ui-action="openSportPage" data-team-id="${escapeHtml(t.id)}" class="px-3.5 py-2 rounded-xl bg-forces-blue hover:bg-forces-royal text-white text-xs font-bold transition">
               Open Team Page →
             </button>
           </div>
@@ -3256,7 +3454,7 @@
     function renderSportPageContent(team) {
       const teamGames = state.games.filter(g => g.teamId === team.id);
       const roster = team.roster || [];
-      const photos = (state.teamPhotos || []).filter(p => p.teamId === team.id);
+      const photos = (state.teamPhotos || []).filter(p => p.teamId === team.id && safePublicMediaUrl(p.url));
       const forms = (state.teamForms || []).filter(f => f.teamId === team.id);
       const canManage = currentSession && (currentSession.role === "AD" || canStaffManageTeam(currentSession, team.id));
 
@@ -3296,12 +3494,12 @@
             </div>
           `).join("");
 
-      const photoOnlyItems = photos.filter(p => !isVideoMediaItem(p));
+      const photoOnlyItems = photos.filter(p => !isVideoMediaItem(p) && safePublicMediaUrl(p.url));
       document.getElementById("sport-overview-photos").innerHTML = photoOnlyItems.length === 0
         ? `<p class="text-xs text-slate-500 col-span-2">No team photos uploaded yet.</p>`
         : photoOnlyItems.slice(0, 4).map(p => `
-            <button type="button" onclick="openMediaLightbox('${escapeHtml(p.url)}', 'image', '${escapeHtml(p.caption || "")}')" class="block w-full bg-slate-100 rounded-xl border border-slate-200 overflow-hidden p-1 hover:border-forces-royal transition">
-              <img src="${escapeHtml(p.url)}" alt="${escapeHtml(p.caption)}" class="w-full h-auto max-h-36 object-contain mx-auto rounded-lg" />
+            <button type="button" data-ui-action="openMediaLightbox" data-media-url="${escapeHtml(safePublicMediaUrl(p.url))}" data-media-type="image" data-media-caption="${escapeHtml(p.caption || "")}" class="block w-full bg-slate-100 rounded-xl border border-slate-200 overflow-hidden p-1 hover:border-forces-royal transition">
+              <img src="${escapeHtml(safePublicMediaUrl(p.url))}" alt="${escapeHtml(p.caption)}" class="w-full h-auto max-h-36 object-contain mx-auto rounded-lg" />
             </button>
           `).join("");
 
@@ -3344,20 +3542,20 @@
             const spanClass = getPhotoSizeSpanClass(sizeKey);
             return `
             <div class="${spanClass} rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 flex flex-col justify-between shadow-sm">
-              <div onclick="openMediaLightbox('${escapeHtml(p.url)}', 'image', '${escapeHtml(p.caption || "")}')" class="w-full bg-slate-100/80 flex items-center justify-center p-2 cursor-zoom-in">
-                <img src="${escapeHtml(p.url)}" alt="${escapeHtml(p.caption)}" class="w-full h-auto object-contain rounded-xl" />
+              <div data-ui-action="openMediaLightbox" data-media-url="${escapeHtml(safePublicMediaUrl(p.url))}" data-media-type="image" data-media-caption="${escapeHtml(p.caption || "")}" role="button" tabindex="0" class="w-full bg-slate-100/80 flex items-center justify-center p-2 cursor-zoom-in">
+                <img src="${escapeHtml(safePublicMediaUrl(p.url))}" alt="${escapeHtml(p.caption)}" class="w-full h-auto object-contain rounded-xl" />
               </div>
               <div class="p-3 flex flex-wrap items-center justify-between gap-2 text-xs bg-white border-t border-slate-100">
                 <span class="font-semibold text-slate-800">${escapeHtml(p.caption)}</span>
                 ${canManage ? `
                   <div class="flex items-center gap-2 shrink-0">
-                    <select onchange="updateTeamPhotoSize('${p.id}', this.value)" title="Customize Photo Size" class="px-2 py-1 rounded-lg border border-slate-300 bg-slate-50 text-[11px] font-semibold text-slate-700">
+                    <select data-ui-event="change" data-ui-action="updateTeamPhotoSize" data-photo-id="${escapeHtml(p.id)}" title="Customize Photo Size" class="px-2 py-1 rounded-lg border border-slate-300 bg-slate-50 text-[11px] font-semibold text-slate-700">
                       <option value="compact" ${sizeKey === "compact" ? "selected" : ""}>Compact</option>
                       <option value="standard" ${sizeKey === "standard" ? "selected" : ""}>Standard</option>
                       <option value="large" ${sizeKey === "large" ? "selected" : ""}>Large / Wide</option>
                       <option value="full" ${sizeKey === "full" ? "selected" : ""}>Full Width</option>
                     </select>
-                    <button onclick="deleteTeamPhoto('${p.id}', '${escapeHtml(p.storagePath || "")}')" class="text-rose-600 font-bold hover:underline">Delete</button>
+                    <button type="button" data-ui-action="deleteTeamPhoto" data-photo-id="${escapeHtml(p.id)}" data-storage-path="${escapeHtml(p.storagePath || "")}" class="text-rose-600 font-bold hover:underline">Delete</button>
                   </div>
                 ` : ""}
               </div>
@@ -3372,11 +3570,11 @@
           : videoItems.map(v => `
               <div class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 flex flex-col justify-between shadow-sm">
                 <div class="w-full bg-slate-900 flex items-center justify-center">
-                  <video src="${escapeHtml(v.url)}" controls playsinline preload="metadata" class="w-full max-h-96 object-contain"></video>
+                  <video src="${escapeHtml(safePublicMediaUrl(v.url))}" controls playsinline preload="metadata" class="w-full max-h-96 object-contain"></video>
                 </div>
                 <div class="p-3 flex items-center justify-between gap-2 text-xs bg-white border-t border-slate-100">
                   <span class="font-semibold text-slate-800">${escapeHtml(v.caption)}</span>
-                  ${canManage ? `<button onclick="deleteTeamPhoto('${v.id}', '${escapeHtml(v.storagePath || "")}')" class="text-rose-600 font-bold hover:underline shrink-0">Delete</button>` : ""}
+                  ${canManage ? `<button type="button" data-ui-action="deleteTeamPhoto" data-photo-id="${escapeHtml(v.id)}" data-storage-path="${escapeHtml(v.storagePath || "")}" class="text-rose-600 font-bold hover:underline shrink-0">Delete</button>` : ""}
                 </div>
               </div>
             `).join("");
@@ -3402,7 +3600,7 @@
 
               ${lockedOut
                 ? `<div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-900">Please sign in with your Student or Staff account at the top of the page to submit this form.</div>`
-                : `<form onsubmit="submitTeamFormResponse(event, '${f.id}')" class="space-y-3">
+                : `<form data-ui-submit="submitTeamFormResponse" data-form-id="${escapeHtml(f.id)}" class="space-y-3">
                     ${(f.questions || []).map((q, qIdx) => {
                       const label = typeof q === "string" ? q : q.label;
                       const type = typeof q === "string" ? "short_text" : q.type;
@@ -3511,15 +3709,20 @@
     }
 
     function openMediaLightbox(url, type, caption) {
+      const safeUrl = safePublicMediaUrl(url);
+      if (!safeUrl) {
+        showToast("This media URL is not trusted.", "error");
+        return;
+      }
       const modal = document.getElementById("media-lightbox-modal");
       const capEl = document.getElementById("media-lightbox-caption");
       const bodyEl = document.getElementById("media-lightbox-body");
       if (!modal || !bodyEl) return;
       if (capEl) capEl.textContent = caption || "Team Media";
       if (type === "video") {
-        bodyEl.innerHTML = `<video src="${escapeHtml(url)}" controls autoplay playsinline class="max-h-[78vh] w-auto max-w-full rounded-lg"></video>`;
+        bodyEl.innerHTML = `<video src="${escapeHtml(safeUrl)}" controls autoplay playsinline class="max-h-[78vh] w-auto max-w-full rounded-lg"></video>`;
       } else {
-        bodyEl.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(caption || "")}" class="max-h-[78vh] w-auto max-w-full object-contain rounded-lg" />`;
+        bodyEl.innerHTML = `<img src="${escapeHtml(safeUrl)}" alt="${escapeHtml(caption || "")}" class="max-h-[78vh] w-auto max-w-full object-contain rounded-lg" />`;
       }
       modal.classList.remove("hidden");
     }
@@ -3537,6 +3740,80 @@
       showToast("Photo display size updated.", "success");
     }
 
+    async function removeTeamPhotoObject(storagePath) {
+      try {
+        const { error } = await supabaseClient.storage.from("team-photos").remove([storagePath]);
+        return error
+          ? { ok: false, error: error.message }
+          : { ok: true };
+      } catch (error) {
+        return { ok: false, error: error?.message || "Unexpected storage error." };
+      }
+    }
+
+    async function removeChatMediaObject(storagePath) {
+      try {
+        const { error } = await supabaseClient.storage.from("chat-media").remove([storagePath]);
+        return error
+          ? { ok: false, error: error.message }
+          : { ok: true };
+      } catch (error) {
+        return { ok: false, error: error?.message || "Unexpected storage error." };
+      }
+    }
+
+    async function uploadChatMediaObject(storagePath, file) {
+      const contentType = getUploadMediaType(file);
+      if (!contentType) return { ok: false, error: "Choose a supported image or video file smaller than 100 MB." };
+      let uploaded = false;
+      try {
+        const { error } = await supabaseClient.storage.from("chat-media").upload(storagePath, file, {
+          upsert: false,
+          contentType
+        });
+        if (error) return { ok: false, error: error.message };
+        uploaded = true;
+        return { ok: true };
+      } catch (error) {
+        let cleanupError = "";
+        if (uploaded) {
+          const cleanup = await removeChatMediaObject(storagePath);
+          if (!cleanup.ok) cleanupError = cleanup.error;
+        }
+        return { ok: false, error: error?.message || "Unexpected storage error.", cleanupError };
+      }
+    }
+
+    async function uploadTeamPhotoObject(storagePath, file) {
+      const contentType = getUploadMediaType(file);
+      if (!contentType) return { ok: false, error: "Choose a supported image or video file smaller than 100 MB." };
+
+      let uploaded = false;
+      try {
+        const { error } = await supabaseClient.storage.from("team-photos").upload(storagePath, file, {
+          upsert: false,
+          contentType
+        });
+        if (error) return { ok: false, error: error.message };
+        uploaded = true;
+
+        const { data } = supabaseClient.storage.from("team-photos").getPublicUrl(storagePath);
+        if (!data?.publicUrl) throw new Error("Supabase did not return a public media URL.");
+        return { ok: true, publicUrl: data.publicUrl };
+      } catch (error) {
+        let cleanupError = "";
+        if (uploaded) {
+          const cleanup = await removeTeamPhotoObject(storagePath);
+          if (!cleanup.ok) cleanupError = cleanup.error;
+        }
+        return {
+          ok: false,
+          error: error?.message || "Unexpected storage error.",
+          cleanupError
+        };
+      }
+    }
+
     async function uploadTeamPhoto(e) {
       e.preventDefault();
       if (!activeSportPageId) return;
@@ -3547,20 +3824,19 @@
       if (!file) return;
 
       const isVideo = (file.type || "").startsWith("video/");
-      const path = `${activeSportPageId}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi, "_")}`;
+      const path = `${activeSportPageId}/${crypto.randomUUID()}_${file.name.replace(/[^a-z0-9._-]/gi, "_")}`;
       showToast(isVideo ? "Uploading video..." : "Uploading photo...", "info");
 
-      const { error } = await supabaseClient.storage.from("team-photos").upload(path, file, { upsert: true });
-      if (error) {
-        showToast("Upload failed: " + error.message, "error");
+      const upload = await uploadTeamPhotoObject(path, file);
+      if (!upload.ok) {
+        showToast("Upload failed: " + upload.error + (upload.cleanupError ? " Cleanup also failed: " + upload.cleanupError : ""), "error");
         return;
       }
 
-      const { data: pubData } = supabaseClient.storage.from("team-photos").getPublicUrl(path);
       state.teamPhotos.unshift({
-        id: `photo-${Date.now()}`,
+        id: `photo-${crypto.randomUUID()}`,
         teamId: activeSportPageId,
-        url: pubData.publicUrl,
+        url: upload.publicUrl,
         storagePath: path,
         caption,
         mediaType: isVideo ? "video" : "image",
@@ -3578,7 +3854,11 @@
 
     async function deleteTeamPhoto(photoId, storagePath) {
       if (storagePath) {
-        await supabaseClient.storage.from("team-photos").remove([storagePath]);
+        const removal = await removeTeamPhotoObject(storagePath);
+        if (!removal.ok) {
+          showToast("Could not remove media from storage: " + removal.error, "error");
+          return;
+        }
       }
       state.teamPhotos = state.teamPhotos.filter(p => p.id !== photoId);
       persistState();
@@ -3655,10 +3935,10 @@
           <div class="p-4 rounded-xl bg-white border-l-4 border-l-forces-royal border border-slate-200 shadow-sm space-y-3">
             <div class="grid sm:grid-cols-12 gap-3 items-center">
               <div class="sm:col-span-7">
-                <input type="text" value="${escapeHtml(q.label)}" oninput="updateDraftQuestion(${idx}, 'label', this.value)" placeholder="Question ${idx + 1} (e.g., T-Shirt Size or Parent Phone)" class="w-full px-3 py-2 rounded-lg border-b-2 border-slate-200 focus:border-forces-royal bg-slate-50 text-sm font-semibold focus:outline-none" />
+                <input type="text" value="${escapeHtml(q.label)}" data-ui-event="input" data-ui-action="updateDraftQuestion" data-question-index="${idx}" data-question-field="label" placeholder="Question ${idx + 1} (e.g., T-Shirt Size or Parent Phone)" class="w-full px-3 py-2 rounded-lg border-b-2 border-slate-200 focus:border-forces-royal bg-slate-50 text-sm font-semibold focus:outline-none" />
               </div>
               <div class="sm:col-span-5">
-                <select onchange="updateDraftQuestion(${idx}, 'type', this.value)" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 bg-white">
+                <select data-ui-event="change" data-ui-action="updateDraftQuestion" data-question-index="${idx}" data-question-field="type" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 bg-white">
                   <option value="short_text" ${q.type === "short_text" ? "selected" : ""}>Short Answer</option>
                   <option value="paragraph" ${q.type === "paragraph" ? "selected" : ""}>Paragraph</option>
                   <option value="dropdown" ${q.type === "dropdown" ? "selected" : ""}>Dropdown Menu</option>
@@ -3673,20 +3953,20 @@
                 ${q.options.map((opt, oIdx) => `
                   <div class="flex items-center gap-2">
                     <span class="text-xs text-slate-400 font-mono">${q.type === "checkboxes" ? "☑" : q.type === "multiple_choice" ? "◉" : `${oIdx + 1}.`}</span>
-                    <input type="text" value="${escapeHtml(opt)}" oninput="updateDraftOption(${idx}, ${oIdx}, this.value)" class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs" />
-                    <button type="button" onclick="removeDraftOption(${idx}, ${oIdx})" class="text-xs text-slate-400 hover:text-rose-600 px-1">✕</button>
+                    <input type="text" value="${escapeHtml(opt)}" data-ui-event="input" data-ui-action="updateDraftOption" data-question-index="${idx}" data-option-index="${oIdx}" class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs" />
+                    <button type="button" data-ui-action="removeDraftOption" data-question-index="${idx}" data-option-index="${oIdx}" class="text-xs text-slate-400 hover:text-rose-600 px-1">✕</button>
                   </div>
                 `).join("")}
-                <button type="button" onclick="addDraftOption(${idx})" class="text-xs font-bold text-forces-royal hover:underline">+ Add Option</button>
+                <button type="button" data-ui-action="addDraftOption" data-question-index="${idx}" class="text-xs font-bold text-forces-royal hover:underline">+ Add Option</button>
               </div>
             ` : `<div class="text-xs text-slate-400 italic">${q.type === "paragraph" ? "Long text answer box" : "Short text answer box"}</div>`}
 
             <div class="pt-2 border-t border-slate-100 flex items-center justify-end gap-4 text-xs">
               <label class="flex items-center gap-1.5 font-semibold text-slate-600 cursor-pointer">
-                <input type="checkbox" ${q.required ? "checked" : ""} onchange="updateDraftQuestion(${idx}, 'required', this.checked)" class="rounded text-forces-blue" />
+                <input type="checkbox" ${q.required ? "checked" : ""} data-ui-event="change" data-ui-action="updateDraftQuestion" data-question-index="${idx}" data-question-field="required" class="rounded text-forces-blue" />
                 Required
               </label>
-              <button type="button" onclick="removeVisualFormQuestion(${idx})" class="font-bold text-rose-600 hover:underline">Delete</button>
+              <button type="button" data-ui-action="removeVisualFormQuestion" data-question-index="${idx}" class="font-bold text-rose-600 hover:underline">Delete</button>
             </div>
           </div>
         `;
@@ -3840,10 +4120,10 @@
               <span class="ml-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">${(f.responses || []).length} Response(s)</span>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <button onclick="openFormResultsModal('${f.id}')" class="px-3 py-1 rounded-lg bg-forces-blue text-white text-xs font-bold hover:bg-forces-royal">View Results</button>
-              <button onclick="startEditTeamForm('${f.id}')" class="px-3 py-1 rounded-lg bg-sky-100 text-forces-blue text-xs font-bold hover:bg-sky-200">Edit Form</button>
-              <button onclick="exportFormResponsesCsv('${f.id}')" class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">Export CSV</button>
-              <button onclick="deleteTeamForm('${f.id}')" class="text-xs font-bold text-rose-600 hover:underline">Delete</button>
+              <button type="button" data-ui-action="openFormResultsModal" data-form-id="${escapeHtml(f.id)}" class="px-3 py-1 rounded-lg bg-forces-blue text-white text-xs font-bold hover:bg-forces-royal">View Results</button>
+              <button type="button" data-ui-action="startEditTeamForm" data-form-id="${escapeHtml(f.id)}" class="px-3 py-1 rounded-lg bg-sky-100 text-forces-blue text-xs font-bold hover:bg-sky-200">Edit Form</button>
+              <button type="button" data-ui-action="exportFormResponsesCsv" data-form-id="${escapeHtml(f.id)}" class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">Export CSV</button>
+              <button type="button" data-ui-action="deleteTeamForm" data-form-id="${escapeHtml(f.id)}" class="text-xs font-bold text-rose-600 hover:underline">Delete</button>
             </div>
           </div>
         </div>
@@ -3909,11 +4189,13 @@
 
     function renderAnnouncementMediaHtml(a) {
       if (!a || !a.mediaUrl) return "";
+      const mediaUrl = safePublicMediaUrl(a.mediaUrl);
+      if (!mediaUrl) return "";
       const isVid = a.mediaType === "video" || /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(a.mediaUrl);
       if (isVid) {
-        return `<div class="mt-3 rounded-xl overflow-hidden bg-slate-900 border border-slate-200"><video src="${escapeHtml(a.mediaUrl)}" controls playsinline preload="metadata" class="w-full max-h-64 object-contain"></video></div>`;
+        return `<div class="mt-3 rounded-xl overflow-hidden bg-slate-900 border border-slate-200"><video src="${escapeHtml(mediaUrl)}" controls playsinline preload="metadata" class="w-full max-h-64 object-contain"></video></div>`;
       }
-      return `<div onclick="openMediaLightbox('${escapeHtml(a.mediaUrl)}', 'image', '${escapeHtml(a.title || "")}')" class="mt-3 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 p-1 cursor-zoom-in"><img src="${escapeHtml(a.mediaUrl)}" alt="${escapeHtml(a.title || "")}" class="w-full h-auto max-h-64 object-contain mx-auto rounded-lg" /></div>`;
+      return `<div data-ui-action="openMediaLightbox" data-media-url="${escapeHtml(mediaUrl)}" data-media-type="image" data-media-caption="${escapeHtml(a.title || "")}" role="button" tabindex="0" class="mt-3 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 p-1 cursor-zoom-in"><img src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(a.title || "")}" class="w-full h-auto max-h-64 object-contain mx-auto rounded-lg" /></div>`;
     }
 
     function getAnnouncementSpanClass(size) {
@@ -3978,13 +4260,12 @@
         const isVideo = (file.type || "").startsWith("video/");
         const path = `announcements/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi, "_")}`;
         showToast(isVideo ? "Uploading announcement video..." : "Uploading announcement photo...", "info");
-        const { error: upErr } = await supabaseClient.storage.from("team-photos").upload(path, file, { upsert: true });
-        if (upErr) {
-          showToast("Media upload failed: " + upErr.message, "error");
+        const upload = await uploadTeamPhotoObject(path, file);
+        if (!upload.ok) {
+          showToast("Media upload failed: " + upload.error + (upload.cleanupError ? " Cleanup also failed: " + upload.cleanupError : ""), "error");
           return;
         }
-        const { data: pubData } = supabaseClient.storage.from("team-photos").getPublicUrl(path);
-        mediaUrl = pubData.publicUrl;
+        mediaUrl = upload.publicUrl;
         mediaType = isVideo ? "video" : "image";
       }
 
@@ -4056,13 +4337,13 @@
             ${a.mediaUrl ? `<div class="max-w-xs">${renderAnnouncementMediaHtml(a)}</div>` : ""}
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <select onchange="updateAnnouncementCardSize('${a.id}', this.value)" title="Card Size" class="px-2 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold">
+            <select data-ui-event="change" data-ui-action="updateAnnouncementCardSize" data-announcement-id="${escapeHtml(a.id)}" title="Card Size" class="px-2 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold">
               <option value="standard" ${(a.cardSize || "standard") === "standard" ? "selected" : ""}>1 Col</option>
               <option value="wide" ${a.cardSize === "wide" ? "selected" : ""}>2 Cols</option>
               <option value="full" ${a.cardSize === "full" ? "selected" : ""}>Full Width</option>
             </select>
-            <button onclick="startEditAnnouncement('${a.id}')" class="px-2.5 py-1 rounded-lg bg-sky-100 text-forces-blue text-xs font-bold hover:bg-sky-200">Edit</button>
-            <button onclick="deleteAnnouncement('${a.id}')" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold hover:bg-rose-100">Delete</button>
+            <button type="button" data-ui-action="startEditAnnouncement" data-announcement-id="${escapeHtml(a.id)}" class="px-2.5 py-1 rounded-lg bg-sky-100 text-forces-blue text-xs font-bold hover:bg-sky-200">Edit</button>
+            <button type="button" data-ui-action="deleteAnnouncement" data-announcement-id="${escapeHtml(a.id)}" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold hover:bg-rose-100">Delete</button>
           </div>
         </div>
       `).join("");
@@ -4269,7 +4550,7 @@
         const unread = isActive ? 0 : getUnreadCountForChannel(c.id);
         const typeTag = c.type === "TEAM" ? "TEAM" : c.type === "DM" ? "DM" : "GROUP";
         return `
-          <button onclick="selectChatChannel('${escapeHtml(c.id)}')" class="w-full text-left p-3 rounded-xl border transition flex items-start justify-between gap-2 ${
+          <button type="button" data-ui-action="selectChatChannel" data-channel-id="${escapeHtml(c.id)}" class="w-full text-left p-3 rounded-xl border transition flex items-start justify-between gap-2 ${
             isActive
               ? "bg-forces-blue text-white border-forces-blue shadow-sm"
               : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
@@ -4307,6 +4588,7 @@
     let reactionsTableMissing = false;
     let openReactionPickerId = null;
     let lastRenderedChannelId = null;
+    const chatMediaSignedUrlCache = new Map();
     let sendingChat = false;
     let audioCtx = null;
 
@@ -4499,17 +4781,28 @@
 
     function formatChatText(text) {
       const raw = String(text || "");
-      const mediaMatch = raw.match(/\[MEDIA:(image|video):(https?:\/\/[^\]]+)\]/);
+      const mediaMatch = raw.match(/\[MEDIA:(image|video):([^\]]+)\]/);
       let mediaHtml = "";
       let cleanText = raw;
       if (mediaMatch) {
         const mType = mediaMatch[1];
-        const mUrl = mediaMatch[2];
         cleanText = raw.replace(mediaMatch[0], "").trim();
-        if (mType === "video") {
-          mediaHtml = `<div class="mt-1.5 rounded-xl overflow-hidden bg-slate-900"><video src="${escapeHtml(mUrl)}" controls playsinline preload="metadata" class="max-h-72 w-auto max-w-full"></video></div>`;
+        const mediaRef = mediaMatch[2];
+        if (mediaRef.startsWith("chat-media/") &&
+            /^chat-media\/[a-zA-Z0-9._/-]+$/.test(mediaRef) &&
+            !mediaRef.split("/").some(part => part === "." || part === "..")) {
+          if (mType === "video") {
+            mediaHtml = `<div class="mt-1.5 rounded-xl overflow-hidden bg-slate-900"><video data-chat-media-path="${escapeHtml(mediaRef.slice("chat-media/".length))}" controls playsinline preload="metadata" class="max-h-72 w-auto max-w-full"></video></div>`;
+          } else {
+            mediaHtml = `<div data-chat-media-path="${escapeHtml(mediaRef.slice("chat-media/".length))}" data-chat-media-type="image" role="button" tabindex="0" aria-label="View chat attachment" class="mt-1.5 rounded-xl overflow-hidden cursor-zoom-in"><img alt="Chat attachment" class="max-h-72 w-auto max-w-full object-contain rounded-xl" /></div>`;
+          }
         } else {
-          mediaHtml = `<div onclick="openMediaLightbox('${escapeHtml(mUrl)}', 'image', 'Chat Photo')" class="mt-1.5 rounded-xl overflow-hidden cursor-zoom-in"><img src="${escapeHtml(mUrl)}" alt="Chat attachment" class="max-h-72 w-auto max-w-full object-contain rounded-xl" /></div>`;
+          const publicUrl = safePublicMediaUrl(mediaRef);
+          if (publicUrl && mType === "video") {
+            mediaHtml = `<div class="mt-1.5 rounded-xl overflow-hidden bg-slate-900"><video src="${escapeHtml(publicUrl)}" controls playsinline preload="metadata" class="max-h-72 w-auto max-w-full"></video></div>`;
+          } else if (publicUrl) {
+            mediaHtml = `<div data-chat-media-url="${escapeHtml(publicUrl)}" data-chat-media-type="image" role="button" tabindex="0" aria-label="View chat attachment" class="mt-1.5 rounded-xl overflow-hidden cursor-zoom-in"><img src="${escapeHtml(publicUrl)}" alt="Chat attachment" class="max-h-72 w-auto max-w-full object-contain rounded-xl" /></div>`;
+          }
         }
       }
       const linked = cleanText
@@ -4518,6 +4811,71 @@
           )
         : "";
       return `${linked}${mediaHtml}`;
+    }
+
+    async function getSignedChatMediaUrl(path) {
+      if (!/^[a-zA-Z0-9._/-]+$/.test(path) || path.split("/").some(part => part === "." || part === "..")) {
+        throw new Error("Invalid chat media path.");
+      }
+      const cached = chatMediaSignedUrlCache.get(path);
+      if (cached && cached.expiresAt > Date.now() + 30000) return cached.url;
+
+      const { data, error } = await supabaseClient.storage
+        .from("chat-media")
+        .createSignedUrl(path, 300);
+      if (error || !data?.signedUrl) {
+        throw new Error(error?.message || "Could not create a temporary chat media link.");
+      }
+      chatMediaSignedUrlCache.set(path, { url: data.signedUrl, expiresAt: Date.now() + 270000 });
+      return data.signedUrl;
+    }
+
+    async function hydratePrivateChatMedia(root) {
+      const mediaNodes = [...root.querySelectorAll("[data-chat-media-path]")];
+      await Promise.all(mediaNodes.map(async node => {
+        if (node.dataset.chatMediaHydrated === "true") return;
+        node.dataset.chatMediaHydrated = "true";
+        try {
+          const signedUrl = await getSignedChatMediaUrl(node.dataset.chatMediaPath);
+          if (node instanceof HTMLVideoElement) node.src = signedUrl;
+          else if (node instanceof HTMLImageElement) node.src = signedUrl;
+          else {
+            const media = node.querySelector("img, video");
+            if (media) media.src = signedUrl;
+          }
+        } catch (error) {
+          node.dataset.chatMediaHydrated = "error";
+          console.error("Could not load private chat media:", error);
+          node.setAttribute("aria-label", "Chat attachment could not be loaded.");
+        }
+      }));
+    }
+
+    async function openPrivateChatMedia(path, type, caption) {
+      try {
+        const signedUrl = await getSignedChatMediaUrl(path);
+        const modal = document.getElementById("media-lightbox-modal");
+        const capEl = document.getElementById("media-lightbox-caption");
+        const bodyEl = document.getElementById("media-lightbox-body");
+        if (!modal || !bodyEl) return;
+        if (capEl) capEl.textContent = caption || "Chat Attachment";
+        bodyEl.replaceChildren();
+        const media = document.createElement(type === "video" ? "video" : "img");
+        media.src = signedUrl;
+        if (type === "video") {
+          media.controls = true;
+          media.autoplay = true;
+          media.playsInline = true;
+          media.className = "max-h-[78vh] w-auto max-w-full rounded-lg";
+        } else {
+          media.alt = caption || "Chat attachment";
+          media.className = "max-h-[78vh] w-auto max-w-full object-contain rounded-lg";
+        }
+        bodyEl.append(media);
+        modal.classList.remove("hidden");
+      } catch (error) {
+        showToast("Could not open chat attachment: " + error.message, "error");
+      }
     }
 
     function handleIncomingChatMessage(row) {
@@ -4680,8 +5038,75 @@
     // Call after any successful sign-in (RLS hides chat from anonymous visitors, so load it now)
     async function initChatSession() {
       if (!currentSession || !supabaseClient) return;
-      await fetchChatData();
-      startChatRealtime();
+      try {
+        const [staffDirectory, channelRows, excusalRows] = await Promise.all([
+          supabaseClient.rpc("get_csw_staff_directory"),
+          supabaseClient.from("csw_chat_channels").select("*"),
+          supabaseClient.from("csw_excusals").select("*").order("date", { ascending: true })
+        ]);
+        if (staffDirectory.error) throw new Error("Could not load the staff directory: " + staffDirectory.error.message);
+        if (channelRows.error) throw new Error("Could not load chat channels: " + channelRows.error.message);
+        if (excusalRows.error) throw new Error("Could not load class excusals: " + excusalRows.error.message);
+
+        state.staffUsers = (staffDirectory.data || []).map(profile => ({
+          id: profile.id,
+          role: profile.role,
+          name: profile.full_name,
+          email: profile.email,
+          phone: profile.phone || "",
+          assignedTeamIds: profile.assigned_team_ids || (profile.team_id ? [profile.team_id] : [])
+        }));
+        state.chatGroups = (channelRows.data || []).map(mapChatChannelRow);
+        state.excusals = (excusalRows.data || []).map(mapExcusalRow);
+
+        if (currentSession.role !== "STUDENT") {
+          const { data: students, error } = await supabaseClient.rpc("get_csw_student_directory");
+          if (error) throw new Error("Could not load the student directory: " + error.message);
+          state.studentDirectory = (students || []).map(profile => ({
+            id: profile.id,
+            name: profile.full_name,
+            email: profile.email,
+            grade: profile.grade || "9"
+          }));
+        } else {
+          state.studentDirectory = [];
+        }
+
+        await fetchChatData();
+        startChatRealtime();
+        saveLocalCache();
+        renderStaffDirectory();
+        if (currentSession.role === "AD") renderStudentDirectoryTable();
+        renderAdminExcusals();
+      } catch (error) {
+        console.error("Could not initialize private user data:", error);
+        showToast(error.message || "Could not load private user data.", "error");
+      }
+    }
+
+    function mapChatChannelRow(row) {
+      return {
+        id: row.id,
+        name: row.name,
+        teamId: row.team_id,
+        isDirect: row.is_direct,
+        permission: row.permission || "ALL",
+        memberEmails: row.member_emails || [],
+        createdByEmail: row.created_by_email || ""
+      };
+    }
+
+    function mapExcusalRow(row) {
+      return {
+        id: row.id,
+        teamId: row.team_id,
+        teamName: row.team_name,
+        date: row.date,
+        time: row.time,
+        reason: row.reason,
+        students: Array.isArray(row.students) ? row.students : [],
+        issuedBy: row.issued_by
+      };
     }
 
     function toggleReactionPicker(msgId) {
@@ -4689,10 +5114,43 @@
       renderActiveChatChannel();
     }
 
+    async function getAuthenticatedChatIdentity() {
+      if (!supabaseClient || !currentSession) throw new Error("Sign in to use chat reactions.");
+      const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+      const user = authData?.user;
+      if (authError || !user?.id || user.id !== currentSession.id || !user.email) {
+        throw new Error(authError?.message || "Your sign-in has expired. Sign in again.");
+      }
+
+      const { data: profile, error: profileError } = await supabaseClient
+        .from("csw_profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profileError) throw new Error("Could not verify your chat profile: " + profileError.message);
+      if (typeof profile?.full_name !== "string" || !profile.full_name.trim()) {
+        throw new Error("Your chat profile is missing a display name.");
+      }
+
+      return { email: user.email.toLowerCase(), name: profile.full_name };
+    }
+
     async function toggleReaction(msgId, emoji) {
       if (!currentSession) return;
+      if (!REACTION_EMOJIS.includes(emoji)) {
+        showToast("That reaction is not supported.", "error");
+        return;
+      }
+      let identity;
+      try {
+        identity = await getAuthenticatedChatIdentity();
+      } catch (error) {
+        showToast(error.message || "Could not verify your chat identity.", "error");
+        return;
+      }
+
       msgId = String(msgId);
-      const email = (currentSession.email || "").toLowerCase();
+      const email = identity.email;
       openReactionPickerId = null;
 
       const idx = state.chatReactions.findIndex(r => r.messageId === msgId && r.emoji === emoji && r.email === email);
@@ -4730,7 +5188,7 @@
           message_id: msgId,
           channel_id: msg ? msg.channelId : null,
           user_email: email,
-          user_name: currentSession.name,
+          user_name: identity.name,
           emoji
         })
         .select()
@@ -4826,6 +5284,7 @@
       }
 
       const myEmail = (currentSession.email || "").toLowerCase();
+      const reactionGroups = new Map();
       streamEl.innerHTML = msgs.map(m => {
         const mid = escapeHtml(String(m.id));
         const isMine = (m.senderEmail || "").toLowerCase() === myEmail;
@@ -4836,26 +5295,13 @@
             ? `<span class="px-1.5 py-0.2 rounded bg-sky-100 text-forces-blue text-[10px] font-extrabold">COACH</span>`
             : "";
 
-        const grouped = {};
+        const grouped = new Map();
         state.chatReactions.forEach(r => {
-          if (r.messageId !== String(m.id)) return;
-          if (!grouped[r.emoji]) grouped[r.emoji] = [];
-          grouped[r.emoji].push(r);
+          if (r.messageId !== String(m.id) || !REACTION_EMOJIS.includes(r.emoji)) return;
+          if (!grouped.has(r.emoji)) grouped.set(r.emoji, []);
+          grouped.get(r.emoji).push(r);
         });
-        const chips = Object.keys(grouped).map(emoji => {
-          const list = grouped[emoji];
-          const mine = list.some(r => r.email === myEmail);
-          const names = list.map(r => r.name).join(", ");
-          return `<button onclick="toggleReaction('${mid}','${emoji}')" title="${escapeHtml(names)}" class="px-2 py-0.5 rounded-full border text-[11px] font-semibold transition ${
-            mine ? "bg-sky-100 border-sky-300 text-forces-blue" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-100"
-          }">${emoji} ${list.length}</button>`;
-        }).join("");
-        const addBtn = `<button onclick="toggleReactionPicker('${mid}')" aria-label="Add reaction" title="Add reaction" class="px-2 py-0.5 rounded-full border border-slate-200 bg-white hover:bg-slate-100 text-[11px] font-semibold text-slate-500 transition">☺ +</button>`;
-        const picker = openReactionPickerId === String(m.id)
-          ? `<div class="flex items-center gap-0.5 mt-1 px-1.5 py-1 rounded-xl bg-white border border-slate-200 shadow-sm">${
-              REACTION_EMOJIS.map(e => `<button onclick="toggleReaction('${mid}','${e}')" class="px-1.5 py-0.5 rounded-lg hover:bg-slate-100 text-base leading-none">${e}</button>`).join("")
-            }</div>`
-          : "";
+        reactionGroups.set(String(m.id), grouped);
 
         return `
           <div class="flex flex-col ${isMine ? "items-end" : "items-start"}">
@@ -4863,7 +5309,7 @@
               <span class="text-[11px] font-bold text-slate-700">${escapeHtml(m.senderName)}</span>
               ${roleChip}
               <span class="text-[10px] text-slate-400">${escapeHtml(m.timeLabel || "")}</span>
-              ${canDelete ? `<button onclick="deleteChatMessage('${mid}')" class="text-[10px] text-rose-500 hover:underline ml-1" title="Delete message">Delete</button>` : ""}
+              ${canDelete ? `<button type="button" data-chat-delete-id="${escapeHtml(mid)}" class="text-[10px] text-rose-500 hover:underline ml-1" title="Delete message">Delete</button>` : ""}
             </div>
             <div class="max-w-[82%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm break-words ${
               isMine
@@ -4872,12 +5318,106 @@
             }">
               ${formatChatText(m.text)}
             </div>
-            <div class="flex flex-wrap items-center gap-1 mt-1 px-1 ${isMine ? "justify-end" : "justify-start"}">${chips}${addBtn}</div>
-            ${picker}
+            <div class="flex flex-wrap items-center gap-1 mt-1 px-1 ${isMine ? "justify-end" : "justify-start"}">
+              <div data-chat-reaction-list="${escapeHtml(mid)}" class="flex flex-wrap items-center gap-1"></div>
+              <button type="button" data-chat-reaction-action="picker" data-chat-message-id="${escapeHtml(mid)}" aria-label="Add reaction" title="Add reaction" class="px-2 py-0.5 rounded-full border border-slate-200 bg-white hover:bg-slate-100 text-[11px] font-semibold text-slate-500 transition">☺ +</button>
+            </div>
+            <div data-chat-reaction-picker="${escapeHtml(mid)}"></div>
           </div>
         `;
       }).join("");
 
+      if (streamEl.dataset.chatActionsBound !== "true") {
+        streamEl.addEventListener("click", event => {
+          const target = event.target instanceof Element ? event.target : null;
+          if (!target) return;
+
+          const deleteButton = target.closest("button[data-chat-delete-id]");
+          if (deleteButton && streamEl.contains(deleteButton)) {
+            void deleteChatMessage(deleteButton.dataset.chatDeleteId);
+            return;
+          }
+
+          const reactionButton = target.closest("button[data-chat-reaction-action]");
+          if (reactionButton && streamEl.contains(reactionButton)) {
+            const messageId = reactionButton.dataset.chatMessageId;
+            if (reactionButton.dataset.chatReactionAction === "picker") {
+              toggleReactionPicker(messageId);
+            } else if (reactionButton.dataset.chatReactionAction === "react" &&
+                       REACTION_EMOJIS.includes(reactionButton.dataset.chatEmoji)) {
+              void toggleReaction(messageId, reactionButton.dataset.chatEmoji);
+            }
+            return;
+          }
+
+          const media = target.closest("[data-chat-media-url]");
+          if (media && streamEl.contains(media)) {
+            openMediaLightbox(media.dataset.chatMediaUrl, media.dataset.chatMediaType, "Chat Photo");
+            return;
+          }
+          const privateMedia = target.closest("[data-chat-media-path]");
+          if (privateMedia && streamEl.contains(privateMedia)) {
+            if (!(privateMedia instanceof HTMLVideoElement)) {
+              void openPrivateChatMedia(privateMedia.dataset.chatMediaPath, "image", "Chat Photo");
+            }
+          }
+        });
+        streamEl.addEventListener("keydown", event => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          const target = event.target instanceof Element ? event.target : null;
+          const media = target?.closest("[data-chat-media-url], [data-chat-media-path]");
+          if (!media || !streamEl.contains(media) || ["BUTTON", "A", "VIDEO"].includes(media.tagName)) return;
+          event.preventDefault();
+          if (media.dataset.chatMediaPath) {
+            void openPrivateChatMedia(media.dataset.chatMediaPath, "image", "Chat Photo");
+          } else {
+            openMediaLightbox(media.dataset.chatMediaUrl, media.dataset.chatMediaType, "Chat Photo");
+          }
+        });
+        streamEl.dataset.chatActionsBound = "true";
+      }
+
+      streamEl.querySelectorAll("[data-chat-reaction-list]").forEach(container => {
+        const messageId = container.dataset.chatReactionList;
+        const grouped = reactionGroups.get(messageId);
+        if (!grouped) return;
+        grouped.forEach((list, emoji) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.dataset.chatReactionAction = "react";
+          button.dataset.chatMessageId = messageId;
+          button.dataset.chatEmoji = emoji;
+          button.title = list.map(reaction => reaction.name || "").join(", ");
+          button.setAttribute("aria-label", `${emoji}, ${list.length} reactions`);
+          button.className = "px-2 py-0.5 rounded-full border text-[11px] font-semibold transition " +
+            (list.some(reaction => reaction.email === myEmail)
+              ? "bg-sky-100 border-sky-300 text-forces-blue"
+              : "bg-white border-slate-200 text-slate-700 hover:bg-slate-100");
+          button.textContent = `${emoji} ${list.length}`;
+          container.append(button);
+        });
+      });
+
+      streamEl.querySelectorAll("[data-chat-reaction-picker]").forEach(container => {
+        const messageId = container.dataset.chatReactionPicker;
+        if (openReactionPickerId !== messageId) return;
+        const picker = document.createElement("div");
+        picker.className = "flex items-center gap-0.5 mt-1 px-1.5 py-1 rounded-xl bg-white border border-slate-200 shadow-sm";
+        REACTION_EMOJIS.forEach(emoji => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.dataset.chatReactionAction = "react";
+          button.dataset.chatMessageId = messageId;
+          button.dataset.chatEmoji = emoji;
+          button.setAttribute("aria-label", `React with ${emoji}`);
+          button.className = "px-1.5 py-0.5 rounded-lg hover:bg-slate-100 text-base leading-none";
+          button.textContent = emoji;
+          picker.append(button);
+        });
+        container.append(picker);
+      });
+
+      void hydratePrivateChatMedia(streamEl);
       streamEl.scrollTop = (!sameChannel || wasNearBottom) ? streamEl.scrollHeight : prevScrollTop;
     }
 
@@ -4897,20 +5437,28 @@
       const submitBtn = e.target.querySelector('button[type="submit"]');
       if (submitBtn) submitBtn.disabled = true;
 
+      let uploadedMediaPath = null;
       try {
         let finalPayload = text;
+        const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+        const sender = authData?.user;
+        if (authError || !sender?.id || sender.id !== currentSession.id || !sender.email) {
+          showToast(authError?.message || "Your sign-in has expired. Sign in again.", "error");
+          return;
+        }
+
         if (file) {
           const isVideo = (file.type || "").startsWith("video/");
-          const safeChannel = activeChatChannelId.replace(/[^a-z0-9_-]/gi, "_");
-          const path = `chat/${safeChannel}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi, "_")}`;
+          const safeChannel = getChatMediaChannelKey(activeChatChannelId);
+          const path = `${safeChannel}/${sender.id}/${crypto.randomUUID()}_${file.name.replace(/[^a-z0-9._-]/gi, "_")}`;
           showToast(isVideo ? "Uploading video to chat..." : "Uploading photo to chat...", "info");
-          const { error: upErr } = await supabaseClient.storage.from("team-photos").upload(path, file, { upsert: true });
-          if (upErr) {
-            showToast("Media upload failed: " + upErr.message, "error");
+          const upload = await uploadChatMediaObject(path, file);
+          if (!upload.ok) {
+            showToast("Media upload failed: " + upload.error + (upload.cleanupError ? " Cleanup also failed: " + upload.cleanupError : ""), "error");
             return;
           }
-          const { data: pubData } = supabaseClient.storage.from("team-photos").getPublicUrl(path);
-          const tag = `[MEDIA:${isVideo ? "video" : "image"}:${pubData.publicUrl}]`;
+          uploadedMediaPath = path;
+          const tag = `[MEDIA:${isVideo ? "video" : "image"}:chat-media/${path}]`;
           finalPayload = text ? `${text}\n${tag}` : tag;
         }
 
@@ -4918,17 +5466,14 @@
           ? activeChatChannelId.replace("team:", "")
           : activeChatChannelId;
 
-        const { data: authData } = await supabaseClient.auth.getUser();
-        const senderUuid = authData?.user?.id || currentSession.id;
-
         const { data, error } = await supabaseClient
           .from("csw_chat_messages")
           .insert({
             team_id: teamId,
             channel_id: activeChatChannelId,
-            sender_id: senderUuid,
+            sender_id: sender.id,
             sender_name: currentSession.name,
-            sender_email: currentSession.email,
+            sender_email: sender.email,
             sender_role: currentSession.role,
             message: finalPayload
           })
@@ -4936,9 +5481,17 @@
           .single();
 
         if (error) {
-          showToast("Message blocked or failed: " + error.message, "error");
+          const cleanup = uploadedMediaPath ? await removeChatMediaObject(uploadedMediaPath) : { ok: true };
+          uploadedMediaPath = null;
+          showToast(
+            "Message blocked or failed: " + error.message +
+              (!cleanup.ok ? " Uploaded media cleanup failed: " + cleanup.error : ""),
+            "error"
+          );
           return;
         }
+        if (!data?.id) throw new Error("Supabase did not return the saved chat message.");
+        uploadedMediaPath = null;
 
         // Realtime may already have delivered our own message; don't duplicate it
         if (!state.chatMessages.some(m => m.id === data.id)) {
@@ -4952,6 +5505,17 @@
         renderActiveChatChannel();
         renderChatSidebar();
         input.focus();
+      } catch (error) {
+        let cleanupError = "";
+        if (uploadedMediaPath) {
+          const cleanup = await removeChatMediaObject(uploadedMediaPath);
+          if (!cleanup.ok) cleanupError = cleanup.error;
+        }
+        showToast(
+          "Message could not be sent: " + (error?.message || "Unexpected error.") +
+            (cleanupError ? " Uploaded media cleanup failed: " + cleanupError : ""),
+          "error"
+        );
       } finally {
         sendingChat = false;
         if (submitBtn) submitBtn.disabled = false;
@@ -4960,20 +5524,43 @@
 
     async function deleteChatMessage(msgId) {
       if (!confirm("Delete this message?")) return;
+      const message = state.chatMessages.find(item => String(item.id) === String(msgId));
       const { error } = await supabaseClient.from("csw_chat_messages").delete().eq("id", msgId);
       if (error) {
         showToast("Could not delete message: " + error.message, "error");
         return;
       }
+      const mediaPaths = [...(message?.text || "").matchAll(/\[MEDIA:(?:image|video):chat-media\/([a-zA-Z0-9._/-]+)\]/g)]
+        .map(match => match[1])
+        .filter(path => !path.split("/").some(part => part === "." || part === ".."));
+      const mediaCleanupErrors = [];
+      for (const path of mediaPaths) {
+        const cleanup = await removeChatMediaObject(path);
+        if (!cleanup.ok) mediaCleanupErrors.push(cleanup.error);
+      }
+      let reactionCleanupError = "";
       if (!reactionsTableMissing) {
-        supabaseClient.from("csw_chat_reactions").delete().eq("message_id", String(msgId)).then(() => {}, () => {});
+        const { error: cleanupError } = await supabaseClient
+          .from("csw_chat_reactions")
+          .delete()
+          .eq("message_id", String(msgId));
+        if (cleanupError && !isMissingTableError(cleanupError)) {
+          reactionCleanupError = cleanupError.message;
+        }
       }
       state.chatMessages = state.chatMessages.filter(m => String(m.id) !== String(msgId));
       state.chatReactions = state.chatReactions.filter(r => r.messageId !== String(msgId));
       saveLocalCache();
       renderActiveChatChannel();
       renderChatSidebar();
-      showToast("Message removed.", "info");
+      const cleanupMessages = [
+        reactionCleanupError ? "Some reactions could not be cleaned up: " + reactionCleanupError : "",
+        mediaCleanupErrors.length ? "Some attachments could not be removed: " + mediaCleanupErrors.join("; ") : ""
+      ].filter(Boolean);
+      showToast(
+        cleanupMessages.length ? "Message removed. " + cleanupMessages.join(" ") : "Message removed.",
+        cleanupMessages.length ? "error" : "info"
+      );
     }
 
     function openCreateGroupModal() {
@@ -4983,7 +5570,7 @@
         : state.teams.filter(t => canStaffManageTeam(currentSession, t.id));
 
       const teamSel = document.getElementById("new-group-team");
-      teamSel.innerHTML = allowedTeams.map(t => `<option value="${t.id}">${escapeHtml(t.name)} (${t.season})</option>`).join("");
+      teamSel.innerHTML = allowedTeams.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)} (${escapeHtml(t.season)})</option>`).join("");
       populateGroupMemberCheckboxes();
       document.getElementById("create-group-modal").classList.remove("hidden");
     }
@@ -5013,29 +5600,39 @@
       boxes.forEach(b => { b.checked = anyUnchecked; });
     }
 
-    function createCustomChatGroup(e) {
+    async function createCustomChatGroup(e) {
       e.preventDefault();
       const name = document.getElementById("new-group-name").value.trim();
       const teamId = document.getElementById("new-group-team").value;
       const permission = document.getElementById("new-group-permission").value;
       const memberEmails = [...document.querySelectorAll('input[name="new-group-member"]:checked')].map(b => b.value);
+      if (!name || !teamId || !["ALL", "STAFF_ONLY"].includes(permission)) {
+        showToast("Enter a group name, team, and valid permission.", "error");
+        return;
+      }
 
       if (!memberEmails.includes(currentSession.email)) {
         memberEmails.push(currentSession.email);
       }
 
-      const newGroup = {
-        id: `grp-${Date.now()}`,
+      const { data: row, error } = await supabaseClient.from("csw_chat_channels").insert({
+        id: `grp-${crypto.randomUUID()}`,
         name,
-        teamId,
+        team_id: teamId,
         permission,
-        memberEmails,
-        createdByEmail: currentSession.email
-      };
+        member_emails: memberEmails,
+        created_by: currentSession.id,
+        created_by_email: currentSession.email,
+        is_direct: false
+      }).select("*").single();
+      if (error) {
+        showToast("Could not create chat group: " + error.message, "error");
+        return;
+      }
 
+      const newGroup = mapChatChannelRow(row);
       state.chatGroups.push(newGroup);
       activeChatChannelId = newGroup.id;
-      persistState();
       closeModal("create-group-modal");
       document.getElementById("new-group-name").value = "";
       renderTeamChatHub();
@@ -5079,31 +5676,47 @@
       document.getElementById("manage-group-modal").classList.remove("hidden");
     }
 
-    function saveGroupSettings(e) {
+    async function saveGroupSettings(e) {
       e.preventDefault();
       const perm = document.getElementById("manage-group-permission").value;
+      if (!["ALL", "STAFF_ONLY"].includes(perm)) {
+        showToast("Choose a valid chat permission.", "error");
+        return;
+      }
       if (activeChatChannelId.startsWith("team:")) {
         state.teamChatPermissions[activeChatChannelId] = perm;
+        persistState();
       } else {
         const grp = state.chatGroups.find(g => g.id === activeChatChannelId);
         if (grp) {
-          grp.permission = perm;
           const checkedMembers = [...document.querySelectorAll('input[name="manage-group-member"]:checked')].map(b => b.value);
           if (!checkedMembers.includes(currentSession.email)) checkedMembers.push(currentSession.email);
-          grp.memberEmails = checkedMembers;
+          const { data: row, error } = await supabaseClient.from("csw_chat_channels")
+            .update({ permission: perm, member_emails: checkedMembers })
+            .eq("id", grp.id)
+            .select("*")
+            .single();
+          if (error) {
+            showToast("Could not update chat group: " + error.message, "error");
+            return;
+          }
+          Object.assign(grp, mapChatChannelRow(row));
         }
       }
-      persistState();
       closeModal("manage-group-modal");
       renderTeamChatHub();
       showToast("Group permissions updated.", "success");
     }
 
-    function deleteActiveCustomGroup() {
+    async function deleteActiveCustomGroup() {
+      const { error } = await supabaseClient.from("csw_chat_channels").delete().eq("id", activeChatChannelId);
+      if (error) {
+        showToast("Could not delete chat group: " + error.message, "error");
+        return;
+      }
       state.chatGroups = state.chatGroups.filter(g => g.id !== activeChatChannelId);
       state.chatMessages = state.chatMessages.filter(m => m.channelId !== activeChatChannelId);
       activeChatChannelId = null;
-      persistState();
       closeModal("manage-group-modal");
       renderTeamChatHub();
       showToast("Custom group deleted.", "info");
@@ -5149,7 +5762,7 @@
       document.getElementById("direct-message-modal").classList.remove("hidden");
     }
 
-    function startDirectMessage(e) {
+    async function startDirectMessage(e) {
       e.preventDefault();
       const sel = document.getElementById("dm-recipient-select");
       const targetEmail = sel.value;
@@ -5160,14 +5773,20 @@
 
       let existing = state.chatGroups.find(g => g.id === dmId);
       if (!existing) {
-        existing = {
+        const { data: row, error } = await supabaseClient.from("csw_chat_channels").insert({
           id: dmId,
-          isDirect: true,
+          is_direct: true,
           name: `${currentSession.name} ↔ ${targetName.split(" (")[0]}`,
-          memberEmails: [currentSession.email, targetEmail]
-        };
+          member_emails: [currentSession.email, targetEmail],
+          created_by: currentSession.id,
+          created_by_email: currentSession.email
+        }).select("*").single();
+        if (error) {
+          showToast("Could not start direct message: " + error.message, "error");
+          return;
+        }
+        existing = mapChatChannelRow(row);
         state.chatGroups.push(existing);
-        persistState();
       }
 
       activeChatChannelId = dmId;
@@ -5241,20 +5860,19 @@
       if (!teamId || !file) return;
 
       const isVideo = (file.type || "").startsWith("video/");
-      const path = `${teamId}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi, "_")}`;
+      const path = `${teamId}/${crypto.randomUUID()}_${file.name.replace(/[^a-z0-9._-]/gi, "_")}`;
       showToast(isVideo ? "Uploading team video..." : "Uploading team photo...", "info");
 
-      const { error } = await supabaseClient.storage.from("team-photos").upload(path, file, { upsert: true });
-      if (error) {
-        showToast("Upload failed: " + error.message, "error");
+      const upload = await uploadTeamPhotoObject(path, file);
+      if (!upload.ok) {
+        showToast("Upload failed: " + upload.error + (upload.cleanupError ? " Cleanup also failed: " + upload.cleanupError : ""), "error");
         return;
       }
 
-      const { data: pubData } = supabaseClient.storage.from("team-photos").getPublicUrl(path);
       state.teamPhotos.unshift({
-        id: `photo-${Date.now()}`,
+        id: `photo-${crypto.randomUUID()}`,
         teamId,
-        url: pubData.publicUrl,
+        url: upload.publicUrl,
         storagePath: path,
         caption,
         mediaType: isVideo ? "video" : "image",
@@ -5279,7 +5897,7 @@
       const countEl = document.getElementById("admin-media-count");
       if (!sel || !grid) return;
       const teamId = sel.value;
-      const items = (state.teamPhotos || []).filter(p => p.teamId === teamId);
+      const items = (state.teamPhotos || []).filter(p => p.teamId === teamId && safePublicMediaUrl(p.url));
       if (countEl) countEl.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
       if (items.length === 0) {
         grid.innerHTML = `<p class="text-xs text-slate-500 col-span-full">No photos or videos uploaded for this program yet.</p>`;
@@ -5291,21 +5909,21 @@
         return `
           <div class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 flex flex-col justify-between shadow-sm">
             ${isVid
-              ? `<div class="bg-slate-900"><video src="${escapeHtml(item.url)}" controls playsinline preload="metadata" class="w-full max-h-56 object-contain"></video></div>`
-              : `<div onclick="openMediaLightbox('${escapeHtml(item.url)}', 'image', '${escapeHtml(item.caption || "")}')" class="bg-slate-100 p-2 cursor-zoom-in"><img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.caption)}" class="w-full h-auto max-h-56 object-contain mx-auto rounded-lg" /></div>`
+              ? `<div class="bg-slate-900"><video src="${escapeHtml(safePublicMediaUrl(item.url))}" controls playsinline preload="metadata" class="w-full max-h-56 object-contain"></video></div>`
+              : `<div data-ui-action="openMediaLightbox" data-media-url="${escapeHtml(safePublicMediaUrl(item.url))}" data-media-type="image" data-media-caption="${escapeHtml(item.caption || "")}" role="button" tabindex="0" class="bg-slate-100 p-2 cursor-zoom-in"><img src="${escapeHtml(safePublicMediaUrl(item.url))}" alt="${escapeHtml(item.caption)}" class="w-full h-auto max-h-56 object-contain mx-auto rounded-lg" /></div>`
             }
             <div class="p-3 bg-white border-t border-slate-100 space-y-2 text-xs">
               <div class="font-semibold text-slate-800">${escapeHtml(item.caption)}</div>
               <div class="flex items-center justify-between gap-2">
                 ${!isVid ? `
-                  <select onchange="updateTeamPhotoSize('${item.id}', this.value)" class="px-2 py-1 rounded-lg border border-slate-300 bg-slate-50 text-[11px] font-semibold">
+                  <select data-ui-event="change" data-ui-action="updateTeamPhotoSize" data-photo-id="${escapeHtml(item.id)}" class="px-2 py-1 rounded-lg border border-slate-300 bg-slate-50 text-[11px] font-semibold">
                     <option value="compact" ${sizeKey === "compact" ? "selected" : ""}>Compact</option>
                     <option value="standard" ${sizeKey === "standard" ? "selected" : ""}>Standard</option>
                     <option value="large" ${sizeKey === "large" ? "selected" : ""}>Large / Wide</option>
                     <option value="full" ${sizeKey === "full" ? "selected" : ""}>Full Width</option>
                   </select>
                 ` : `<span class="px-2 py-0.5 rounded bg-sky-100 text-forces-blue font-bold text-[10px] uppercase">Video</span>`}
-                <button onclick="deleteTeamPhoto('${item.id}', '${escapeHtml(item.storagePath || "")}')" class="text-rose-600 font-bold hover:underline">Delete</button>
+                <button type="button" data-ui-action="deleteTeamPhoto" data-photo-id="${escapeHtml(item.id)}" data-storage-path="${escapeHtml(item.storagePath || "")}" class="text-rose-600 font-bold hover:underline">Delete</button>
               </div>
             </div>
           </div>
@@ -5318,7 +5936,7 @@
         ? state.teams
         : state.teams.filter(t => canStaffManageTeam(currentSession, t.id));
 
-      const opts = allowedTeams.map(t => `<option value="${t.id}">${escapeHtml(t.name)} (${t.season})</option>`).join("");
+      const opts = allowedTeams.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)} (${escapeHtml(t.season)})</option>`).join("");
       ["new-game-team", "prac-team-select", "attendance-summary-team", "admin-team-selector", "excusal-team-select", "admin-media-team-select"].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -5416,14 +6034,14 @@
               </select>
             </td>
             <td class="py-3 px-4">
-              <input type="number" id="game-csw-${g.id}" value="${g.cswScore ?? ""}" placeholder="-" class="w-16 px-2 py-1 rounded-lg border border-slate-300 text-xs text-center font-bold" />
+              <input type="number" id="game-csw-${escapeHtml(g.id)}" value="${escapeHtml(g.cswScore ?? "")}" placeholder="-" class="w-16 px-2 py-1 rounded-lg border border-slate-300 text-xs text-center font-bold" />
             </td>
             <td class="py-3 px-4">
-              <input type="number" id="game-opp-${g.id}" value="${g.oppScore ?? ""}" placeholder="-" class="w-16 px-2 py-1 rounded-lg border border-slate-300 text-xs text-center font-bold" />
+              <input type="number" id="game-opp-${escapeHtml(g.id)}" value="${escapeHtml(g.oppScore ?? "")}" placeholder="-" class="w-16 px-2 py-1 rounded-lg border border-slate-300 text-xs text-center font-bold" />
             </td>
             <td class="py-3 px-4 text-right whitespace-nowrap space-x-1.5">
-              <button onclick="saveGameScore('${g.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Save</button>
-              <button onclick="deleteGame('${g.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold">Delete</button>
+              <button type="button" data-ui-action="saveGameScore" data-game-id="${escapeHtml(g.id)}" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Save</button>
+              <button type="button" data-ui-action="deleteGame" data-game-id="${escapeHtml(g.id)}" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold">Delete</button>
             </td>
           </tr>
         `;
@@ -5525,7 +6143,7 @@
                 <span class="font-bold text-sm text-slate-900 ml-2">${escapeHtml(p.date)} • ${escapeHtml(p.time)}</span>
                 <span class="text-xs text-slate-500 ml-2">(${escapeHtml(p.location)})</span>
               </div>
-              <button onclick="deletePractice('${p.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
+              <button type="button" data-ui-action="deletePractice" data-practice-id="${escapeHtml(p.id)}" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
             </div>
             ${roster.length === 0
               ? `<p class="text-xs text-slate-500">Add athletes to this team's roster to take attendance.</p>`
@@ -5535,7 +6153,7 @@
                     return `
                       <div class="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs">
                         <span class="font-semibold truncate">#${escapeHtml(r.number)} ${escapeHtml(r.name)}</span>
-                        <select onchange="setPracticeAttendance('${p.id}', '${escapeHtml(r.email)}', this.value)" class="px-2 py-1 rounded border border-slate-300 font-bold text-[11px] bg-slate-50">
+                        <select data-ui-event="change" data-ui-action="setPracticeAttendance" data-practice-id="${escapeHtml(p.id)}" data-student-email="${escapeHtml(r.email)}" class="px-2 py-1 rounded border border-slate-300 font-bold text-[11px] bg-slate-50">
                           <option value="Present" ${cur === "Present" ? "selected" : ""}>Present</option>
                           <option value="Tardy" ${cur === "Tardy" ? "selected" : ""}>Tardy</option>
                           <option value="Excused" ${cur === "Excused" ? "selected" : ""}>Excused</option>
@@ -5659,14 +6277,14 @@ const coachesListEl = document.getElementById("admin-program-coaches-list");
               <div class="text-xs text-forces-royal font-semibold">${escapeHtml(c.title)}</div>
               <div class="text-[11px] text-slate-500">${escapeHtml(c.email)}</div>
             </div>
-            ${(team.coaches || []).length > idx ? `<button onclick="removeProgramCoachEntry('${team.id}', ${idx})" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>` : `<span class="text-[10px] font-bold text-slate-400">AD Synced</span>`}
+            ${(team.coaches || []).length > idx ? `<button type="button" data-ui-action="removeProgramCoachEntry" data-team-id="${escapeHtml(team.id)}" data-entry-index="${idx}" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>` : `<span class="text-[10px] font-bold text-slate-400">AD Synced</span>`}
           </div>
         `).join("");
   
       const dirSel = document.getElementById("roster-directory-select");
       dirSel.innerHTML = state.studentDirectory.length === 0
         ? `<option value="">No registered students in directory yet</option>`
-        : state.studentDirectory.map(s => `<option value="${s.id}">${escapeHtml(s.name)} (Grade ${s.grade})</option>`).join("");
+        : state.studentDirectory.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} (Grade ${escapeHtml(s.grade)})</option>`).join("");
 
       const rosterList = document.getElementById("admin-roster-list");
       const roster = team.roster || [];
@@ -5678,7 +6296,7 @@ const coachesListEl = document.getElementById("admin-program-coaches-list");
                 <div class="font-bold text-sm text-slate-900">#${escapeHtml(r.number)} ${escapeHtml(r.name)}</div>
                 <div class="text-xs text-slate-500">Grade ${escapeHtml(r.grade)} • ${escapeHtml(r.position)}</div>
               </div>
-              <button onclick="removeRosterPlayer('${team.id}', ${idx})" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
+              <button type="button" data-ui-action="removeRosterPlayer" data-team-id="${escapeHtml(team.id)}" data-entry-index="${idx}" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
             </div>
           `).join("");
 
@@ -5766,17 +6384,18 @@ const coachesListEl = document.getElementById("admin-program-coaches-list");
       const subject = document.getElementById("roster-blast-subject").value.trim();
       const message = document.getElementById("roster-blast-body").value.trim();
 
-      closeModal("roster-blast-modal");
       showToast(`Sending email to ${recipients.length} athletes...`, "info");
 
-      await callAppsScriptBridge("roster_blast", {
+      const result = await callAppsScriptBridge("roster_blast", {
         recipients,
         teamName: team.name,
         senderName: currentSession.name,
         subject: `[${team.name}] ${subject}`,
         message
       });
+      if (!result.ok) return;
 
+      closeModal("roster-blast-modal");
       e.target.reset();
       showToast(`Email sent to ${team.name} roster!`, "success");
     }
@@ -5820,26 +6439,30 @@ const coachesListEl = document.getElementById("admin-program-coaches-list");
         return;
       }
 
-      const excusal = {
-        id: `exc-${Date.now()}`,
-        teamId,
-        teamName: team?.name || "Forces Athletics",
+      const { data: row, error } = await supabaseClient.from("csw_excusals").insert({
+        id: crypto.randomUUID(),
+        team_id: teamId,
+        team_name: team?.name || "Forces Athletics",
         date,
         time,
         reason,
         students,
-        issuedBy: currentSession.name
-      };
+        issued_by: currentSession.name
+      }).select("*").single();
+      if (error) {
+        showToast("Could not save class excusal: " + error.message, "error");
+        return;
+      }
 
+      const excusal = mapExcusalRow(row);
       state.excusals.unshift(excusal);
-      persistState();
       renderAdminExcusals();
       e.target.reset();
       populateExcusalRosterCheckboxes();
-      showToast("Class excusal released & faculty notified!", "success");
+      showToast("Class excusal released.", "success");
 
       if (state.teacherMailingList.length > 0) {
-        callAppsScriptBridge("class_excusal", {
+        await callAppsScriptBridge("class_excusal", {
           recipients: state.teacherMailingList,
           teamName: excusal.teamName,
           date,
@@ -5872,8 +6495,8 @@ const coachesListEl = document.getElementById("admin-program-coaches-list");
             <div class="text-xs text-slate-600 mt-1">${escapeHtml(ex.reason)} • ${ex.students.length} Student(s)</div>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="openPrintableExcusal('${ex.id}')" class="px-3.5 py-2 rounded-xl bg-forces-blue text-white text-xs font-bold hover:bg-forces-royal">View / Print Pass</button>
-            <button onclick="deleteExcusal('${ex.id}')" class="px-3 py-2 rounded-xl bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100">Delete</button>
+            <button type="button" data-ui-action="openPrintableExcusal" data-excusal-id="${escapeHtml(ex.id)}" class="px-3.5 py-2 rounded-xl bg-forces-blue text-white text-xs font-bold hover:bg-forces-royal">View / Print Pass</button>
+            <button type="button" data-ui-action="deleteExcusal" data-excusal-id="${escapeHtml(ex.id)}" class="px-3 py-2 rounded-xl bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100">Delete</button>
           </div>
         </div>
       `).join("");
@@ -5904,10 +6527,15 @@ const coachesListEl = document.getElementById("admin-program-coaches-list");
       document.getElementById("excusal-print-modal").classList.remove("hidden");
     }
 
-    function deleteExcusal(id) {
+    async function deleteExcusal(id) {
+      const { error } = await supabaseClient.from("csw_excusals").delete().eq("id", id);
+      if (error) {
+        showToast("Could not delete class excusal: " + error.message, "error");
+        return;
+      }
       state.excusals = state.excusals.filter(x => x.id !== id);
-      persistState();
       renderAdminExcusals();
+      showToast("Class excusal deleted.", "success");
     }
 
     function renderOperationsTab() {
@@ -6257,7 +6885,7 @@ if (!error && data?.user) {
             <span class="text-xs font-bold uppercase tracking-wider text-amber-900">
               Student Password Change Alerts (${logs.length})
             </span>
-            <button type="button" onclick="dismissAllPasswordResetAlerts()" class="text-xs font-bold text-amber-800 hover:underline">
+            <button type="button" data-ui-action="dismissAllPasswordResetAlerts" class="text-xs font-bold text-amber-800 hover:underline">
               Mark All Reviewed
             </button>
           </div>
@@ -6269,7 +6897,7 @@ if (!error && data?.user) {
                   <span class="text-slate-600">(${escapeHtml(l.email)})</span>
                   <span class="text-amber-800 font-medium">&bull; ${escapeHtml(l.method)} &bull; ${escapeHtml(l.timestamp)}</span>
                 </div>
-                <button type="button" onclick="dismissPasswordResetAlert('${l.id}')" class="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold shrink-0">
+                <button type="button" data-ui-action="dismissPasswordResetAlert" data-alert-id="${escapeHtml(l.id)}" class="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold shrink-0">
                   Dismiss
                 </button>
               </div>
@@ -6329,9 +6957,9 @@ return `
 
 <td class="py-3 px-4 text-right whitespace-nowrap space-x-3">
 
-<button onclick="sendResetEmailById('${s.id}', 'STUDENT')" class="text-xs font-bold text-forces-royal hover:underline">Send Password Reset</button>
+<button type="button" data-ui-action="sendResetEmailById" data-user-id="${escapeHtml(s.id)}" data-account-type="STUDENT" class="text-xs font-bold text-forces-royal hover:underline">Send Password Reset</button>
 
-<button onclick="deleteStudentFromDirectory('${s.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
+<button type="button" data-ui-action="deleteStudentFromDirectory" data-user-id="${escapeHtml(s.id)}" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>
 
 </td>
 
@@ -6356,7 +6984,7 @@ return `
       const boxWrap = document.getElementById("staff-new-sports-checkboxes");
       boxWrap.innerHTML = state.teams.map(t => `
         <label class="flex items-center gap-2 p-1.5 rounded-lg bg-white border border-slate-200 text-xs font-medium cursor-pointer">
-          <input type="checkbox" name="staff-new-sport" value="${t.id}" onchange="updateSelectedSportsCount()" class="w-3.5 h-3.5 rounded text-forces-blue" />
+          <input type="checkbox" name="staff-new-sport" value="${escapeHtml(t.id)}" onchange="updateSelectedSportsCount()" class="w-3.5 h-3.5 rounded text-forces-blue" />
           <span class="truncate">${escapeHtml(t.name)}</span>
         </label>
       `).join("");
@@ -6379,10 +7007,10 @@ return `
             </td>
             <td class="py-3 px-4 text-xs text-slate-700 max-w-xs">${escapeHtml(sportNames)}</td>
             <td class="py-3 px-4 text-right whitespace-nowrap space-x-2">
-           ${currentSession.role === "AD" && u.id !== currentSession.id ? `<button onclick="sendResetEmailById('${u.id}', 'STAFF')" class="text-xs font-bold text-amber-700 hover:underline">Send Password Reset</button>` : ""}
-           <button onclick="openEditStaffModal('${u.id}')" class="text-xs font-bold text-forces-royal hover:underline">Edit Info</button>
-           ${currentSession.role === "AD" && u.id !== currentSession.id ? `<button onclick="resetStaffTwoFactor('${u.id}')" class="text-xs font-bold text-sky-700 hover:underline">Reset 2FA</button>` : ""}
-           ${u.id !== currentSession.id ? `<button onclick="deleteStaffUser('${u.id}')" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>` : ""}
+           ${currentSession.role === "AD" && u.id !== currentSession.id ? `<button type="button" data-ui-action="sendResetEmailById" data-user-id="${escapeHtml(u.id)}" data-account-type="STAFF" class="text-xs font-bold text-amber-700 hover:underline">Send Password Reset</button>` : ""}
+           <button type="button" data-ui-action="openEditStaffModal" data-user-id="${escapeHtml(u.id)}" class="text-xs font-bold text-forces-royal hover:underline">Edit Info</button>
+           ${currentSession.role === "AD" && u.id !== currentSession.id ? `<button type="button" data-ui-action="resetStaffTwoFactor" data-user-id="${escapeHtml(u.id)}" class="text-xs font-bold text-sky-700 hover:underline">Reset 2FA</button>` : ""}
+           ${u.id !== currentSession.id ? `<button type="button" data-ui-action="deleteStaffUser" data-user-id="${escapeHtml(u.id)}" class="text-xs font-bold text-rose-600 hover:underline">Remove</button>` : ""}
          </td>
           </tr>
         `;
@@ -6492,7 +7120,7 @@ return `
         const currentIds = getCoachTeamIds(user);
         document.getElementById("edit-staff-sports-checkboxes").innerHTML = state.teams.map(t => `
           <label class="flex items-center gap-2 p-1.5 rounded-lg bg-white border border-slate-200 text-xs font-medium cursor-pointer">
-            <input type="checkbox" name="edit-staff-sport" value="${t.id}" ${currentIds.includes(t.id) ? "checked" : ""} class="w-3.5 h-3.5 rounded text-forces-blue" />
+            <input type="checkbox" name="edit-staff-sport" value="${escapeHtml(t.id)}" ${currentIds.includes(t.id) ? "checked" : ""} class="w-3.5 h-3.5 rounded text-forces-blue" />
             <span class="truncate">${escapeHtml(t.name)}</span>
           </label>
         `).join("");
@@ -6787,6 +7415,9 @@ function syncStaffCoachToTeam(teamId, name, email, title = "Head Coach") {
     }
 
     window.addEventListener("DOMContentLoaded", () => {
+      ["click", "change", "input", "submit", "keydown"].forEach(eventName => {
+        document.addEventListener(eventName, handleDynamicUiAction);
+      });
       window.addEventListener('offline', () => showToast("You lost your internet connection.", "error"));
       window.addEventListener('online', () => {
         showToast("Back online! Connection restored.", "success");
